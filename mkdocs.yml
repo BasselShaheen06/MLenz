@@ -1,0 +1,96 @@
+site_name: MPRViewer
+site_description: Multi-Planar Reconstruction medical image viewer — NIfTI, DICOM, VTK volume rendering
+site_author: Bassel Shaheen
+site_url: https://basselshaheen06.github.io/MPR_Viewer
+repo_url: https://github.com/BasselShaheen06/MPR_Viewer
+repo_name: BasselShaheen06/MPR_Viewer
+
+copyright: >
+  MIT License &nbsp;·&nbsp; Bassel Shaheen, Cairo University SBME &nbsp;·&nbsp;
+  <a href="mailto:bassel.abdelmonem06@eng-st.cu.edu.eg">
+    ✉ bassel.abdelmonem06@eng-st.cu.edu.eg
+  </a>
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.sections
+    - navigation.footer
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+    - toc.follow
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - The Science: science.md
+  - API Reference:
+      - core/loader.py: api/loader.md
+      - core/renderer.py: api/renderer.md
+  - Roadmap: roadmap.md
+  - Changelog: changelog.md
+  - Contributing: contributing.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/BasselShaheen06
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/basselshaheen06/
+    - icon: fontawesome/solid/envelope
+      link: mailto:bassel.abdelmonem06@eng-st.cu.edu.eg

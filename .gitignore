@@ -1,19 +1,13 @@
-# Byte-compiled / optimized / DLL files
+venv/
 __pycache__/
-*.py[cod]
-*.so
-
-# Virtual environment directories
-myenv/
-menv/
-# IDE or editor directories
-.vscode/
-.idea/
-
-# Log files
-*.log
-
-# OS-generated files
-.DS_Store
-Thumbs.db
-
+*.pyc
+*.pyo
+*.nii
+*.nii.gz
+*.dcm
+*.DS_Store
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+site/

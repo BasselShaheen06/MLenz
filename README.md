@@ -1,123 +1,63 @@
-# MPR Viewer with Segmentation
+<div align="center">
 
-## Description
+# MPRViewer
 
-The **MPR Viewer with Segmentation** is an interactive medical imaging viewer designed to visualize MRI scans in three orthogonal planes (Axial, Coronal, and Sagittal). This tool allows users to load medical image files (e.g., NIfTI format), navigate through slices, and explore volume rendering. It provides essential features such as brightness and contrast adjustments, crosshair navigation, playback of slices, and customizable colormaps for intuitive analysis.
+**Multi-Planar Reconstruction medical image viewer**
 
-The application is built using **PyQt5**, **Matplotlib**, **SimpleITK**, and **VTK**, ensuring a rich user interface and powerful 3D visualization.
+[![Docs](https://img.shields.io/badge/docs-github.io-teal)](https://basselshaheen06.github.io/MPR_Viewer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-teal)](https://www.python.org)
+
+<!-- Replace with actual demo GIF -->
+<!-- ![MPRViewer demo](assets/demo/demo.gif) -->
+
+</div>
 
 ---
+
+MPRViewer loads NIfTI and DICOM volumes and displays all three orthogonal planes (Axial, Coronal, Sagittal) with synchronized crosshair navigation. A fourth panel embeds VTK GPU ray-cast volume rendering directly in the window.
 
 ## Features
 
-- **Three Viewports**: Simultaneously view Axial, Coronal, and Sagittal slices.
-- **Volume Rendering**: Visualize 3D volume data with interactive zoom and rotation.
-- **Colormap Selection**: Choose from multiple colormaps for better visualization (e.g., Gray, Viridis, Plasma, Jet).
-- **Brightness & Contrast Adjustment**: Fine-tune image visibility for each plane.
-- **Crosshair Navigation**: Automatically synchronize slice navigation across all planes.
-- **Cine Mode**: Play slices as an animated sequence.
-- **Mouse Interaction**: Zoom, pan, and interact with the images directly using the mouse.
-- **Reset View**: Instantly reset brightness, contrast, and crosshair positions to default.
+| | |
+|---|---|
+| **MPR planes** | Axial, Coronal, Sagittal — synchronized crosshair |
+| **File formats** | NIfTI (`.nii`, `.nii.gz`), DICOM series, single DICOM |
+| **Window / Level** | Per-plane W/L controls (radiological standard) |
+| **3D rendering** | VTK GPU ray-cast, embedded as 4th viewport |
+| **Transfer functions** | MRI default, Bone, Angio, PET presets |
+| **Cine mode** | 20 fps animated slice playback |
+| **Theme** | Dark (clinical default) + light mode |
 
----
-
-## Prerequisites
-
-Ensure you have the following dependencies installed on your system:
-
-- **Python 3.8+**
-- Libraries:
-  - PyQt5
-  - Matplotlib
-  - SimpleITK
-  - NumPy
-  - VTK
-
-To install the required libraries, run:
+## Quick start
 
 ```bash
-pip install PyQt5 matplotlib SimpleITK vtk numpy
+git clone https://github.com/BasselShaheen06/MPR_Viewer.git
+cd MPR_Viewer
+python -m venv venv
+venv\Scripts\activate    # Windows
+pip install -r requirements.txt
+python main.py
 ```
 
----
+→ **[Full documentation](https://basselshaheen06.github.io/MPR_Viewer)**
 
-## Installation and Usage
+## Architecture
 
-1. Clone this repository:
+```
+mprviewer/
+├── core/
+│   ├── loader.py      # NIfTI + DICOM loading — no UI
+│   └── renderer.py    # VTK pipeline — no UI
+└── ui/
+    ├── viewport.py    # SliceViewport widget (reusable, ×3)
+    ├── controls.py    # Sidebar panel
+    ├── main_window.py # Wiring + crosshair sync
+    └── theme.py       # Dark / light palettes
+```
 
-   ```bash
-   git clone https://github.com/yourusername/mpr-viewer.git
-   cd mpr-viewer
-   ```
-
-2. Run the application:
-
-   ```bash
-   python MPR_Viewer1.py
-   ```
-
-3. Use the **Load MRI Scan** button to load NIfTI (`.nii` or `.nii.gz`) files into the viewer.
-
-4. Explore features such as:
-
-   - Adjusting brightness and contrast for better visualization.
-   - Navigating slices with sliders or mouse clicks.
-   - Using the **Play/Pause** button to view slices in motion.
-   - Selecting colormaps from the dropdown menu.
-   - panning using arrow keys
-
----
-
-## Supported File Formats
-
-- **NIfTI**: `.nii`, `.nii.gz`
-- Directory-based DICOM series are also supported.
-
----
-## Slice View
-
-The MRI scan can be viewed in multiple slices. Below is an example of a slice view:
-
-![Axial slice View](Docs/Brain_Views/axial_slice.jpg)
----
-
-## Screenshots
-
-![Axial, Coronal, and Sagittal slices in synchronized crosshair mode](screenshots/Screenshot3.png)
-
-![Axial, Coronal, and Sagittal slices in synchronized crosshair mode in addition to the 3d volume](screenshots/Screenshot1.png)
----
-
-## Video for the app
-https://github.com/user-attachments/assets/a6f0bf49-2bff-4698-bca1-c8b34a46835f
-
-
-## Future Enhancements
-
-- Incorporate segmentation overlays for enhanced analysis.
-- Add support for additional medical imaging formats.
-- Improve volume rendering with advanced transfer functions.
----
+`core/` modules are pure functions — no Qt, no matplotlib. They can be used independently in scripts or notebooks.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](License) file for details.
----
-
-## Contribution
-
-Contributions are welcome! Please open an issue or submit a pull request to help improve the MPR Viewer.
-
----
-
-## Acknowledgements
-
-- **PyQt5** for the responsive user interface.
-- **SimpleITK** for efficient medical image processing.
-- **VTK** for interactive 3D volume rendering.
-- **Matplotlib** for intuitive visualization in the 2D views.
-
-
-
-
-
+MIT — Bassel Shaheen, Cairo University SBME

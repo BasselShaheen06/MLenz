@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "mprviewer"
+version = "1.0.0"
+description = "Multi-Planar Reconstruction medical image viewer"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Bassel Shaheen", email = "bassel.abdelmonem06@eng-st.cu.edu.eg" }]
+dependencies = [
+    "PyQt5>=5.15",
+    "matplotlib>=3.7",
+    "SimpleITK>=2.3",
+    "numpy>=1.24",
+    "vtk>=9.2",
+    "pydicom>=2.4",
+]
+
+[project.scripts]
+mprviewer = "main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mprviewer*"]
