@@ -1,6 +1,8 @@
 """MPRViewer entry point."""
 import sys
+
 from PyQt5.QtWidgets import QApplication
+
 from mprviewer.ui.main_window import MainWindow
 
 def main():

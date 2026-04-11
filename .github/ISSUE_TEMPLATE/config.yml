@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://basselshaheen06.github.io/MPR_Viewer
+    about: Review the documentation before opening an issue.
+  - name: Security
+    url: https://github.com/BasselShaheen06/MPR_Viewer/security
+    about: Report security issues privately.

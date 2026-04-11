@@ -7,29 +7,29 @@ repo_name: BasselShaheen06/MPR_Viewer
 
 copyright: >
   MIT License &nbsp;·&nbsp; Bassel Shaheen, Cairo University SBME &nbsp;·&nbsp;
-  <a href="mailto:bassel.abdelmonem06@eng-st.cu.edu.eg">
-    ✉ bassel.abdelmonem06@eng-st.cu.edu.eg
-  </a>
+  <a href="mailto:bassel.abdelmonem06@eng-st.cu.edu.eg">Email</a> &nbsp;·&nbsp;
+  <a href="https://www.linkedin.com/in/basselshaheen06/">LinkedIn</a> &nbsp;·&nbsp;
+  <a href="https://github.com/BasselShaheen06">GitHub</a>
 
 theme:
   name: material
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: teal
+      primary: blue grey
       accent: teal
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: teal
+      primary: blue grey
       accent: teal
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
   font:
-    text: Inter
+    text: IBM Plex Sans
     code: JetBrains Mono
   features:
     - navigation.tabs
