@@ -2,50 +2,54 @@
 
 ## Loading data
 
-**Load NIfTI** — opens a file picker for `.nii` or `.nii.gz` files.
-
-**Load DICOM** — opens a folder picker. MPRViewer reads the DICOM series
-inside and sorts slices automatically using DICOM position metadata
-(more reliable than filename sorting).
+| Button | What it does |
+|---|---|
+| **Load NIfTI** | Opens a file picker for `.nii` or `.nii.gz` |
+| **Load DICOM** | Opens a folder picker — reads the series inside, sorted by position |
 
 While loading, a progress overlay appears and controls are disabled.
-Large volumes (>500 slices) may take a few seconds on first load.
-Subsequent slice navigation is fast because slices are cached in memory.
+The load runs in a background thread so the UI stays responsive.
 
 ---
 
 ## Layout
 
 ```
-┌─────────────────────────────────────────────────┐
-│  TopBar: Load · Load DICOM · 3D ☐ · Preset      │
-│          Reset · ☀/🌙                           │
-├─────────────────────────┬───────────────────────┤
-│      Axial              │      Sagittal          │
-│   (Z slices)            │   (X slices)           │
-├─────────────────────────┼───────────────────────┤
-│      Coronal            │   3D Volume (VTK)      │
-│   (Y slices)            │   hidden by default    │
-└─────────────────────────┴───────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  TopBar: Load NIfTI · Load DICOM · [3D ☐] [Preset ▾]    │
+│          Reset · ☀/🌙                                    │
+├──────────────────────────┬───────────────────────────────┤
+│  Axial          N/M      │  Sagittal          N/M        │
+│  [image]                 │  [image]                      │
+│  ◀─── slice ───▶        │  ◀─── slice ───▶             │
+│  ▶ [gray ▾] W── L──    │  ▶ [gray ▾] W── L──         │
+│  ✏ 🗑 💾               │  ✏ 🗑 💾                    │
+├──────────────────────────┼───────────────────────────────┤
+│  Coronal        N/M      │  3D Volume (hidden by default) │
+│  [image]                 │                               │
+│  ◀─── slice ───▶        │  (tick 3D checkbox to show)   │
+│  ▶ [gray ▾] W── L──    │                               │
+│  ✏ 🗑 💾               │                               │
+└──────────────────────────┴───────────────────────────────┘
+│  Status bar                                              │
+└──────────────────────────────────────────────────────────┘
 ```
-
-The 3D panel is hidden until you tick the **3D** checkbox in the top bar.
 
 ---
 
 ## Crosshair navigation
 
 ### Drag
-Each crosshair line is draggable. Click and drag the red dashed line in
-any viewport — all three planes update in real time to reflect the new position.
+Each red dashed crosshair line is draggable. Hover over a line until it
+highlights, then click and drag. All three planes update in real time.
+A hollow red circle marks the intersection point.
 
 ### Click to jump
-Left-click anywhere in a viewport to jump the crosshair to that position.
-All three planes synchronise immediately.
+Left-click anywhere inside a viewport to jump the crosshair to that position.
 
 ### Slice slider
-The slider below each viewport moves through slices in that plane independently.
-The slice counter in the title bar shows current position (e.g. "45 / 180").
+The slider below each viewport moves through slices for that plane independently.
+The counter in the title bar shows `current / total`.
 
 ---
 
@@ -53,58 +57,80 @@ The slice counter in the title bar shows current position (e.g. "45 / 180").
 
 | Action | Effect |
 |---|---|
-| Scroll wheel | Zoom in / out, centred on cursor |
-| Right-click drag | Pan |
-| Double-click | Reset zoom to fit image |
+| Scroll wheel | Zoom in / out centred on cursor |
+| Right-click drag | Pan the image |
+| Double-click | Reset zoom and pan to fit |
 
-Zoom state is preserved when you move to a different slice — the view
-stays at the same zoom and pan position.
+Zoom state is preserved when you change slices — the view stays at the
+same zoom and pan position.
 
 ---
 
-## Window / Level (W/L)
+## Per-viewport controls
 
-Window and Level are the radiological standard controls for image brightness
-and contrast. Each viewport has its own embedded controls bar with W/L sliders.
+Each viewport has its own embedded control bar:
+
+| Control | Effect |
+|---|---|
+| **▶ / ⏸** | Play or pause cine for this plane at 20 fps |
+| **Colormap dropdown** | Change colormap for this plane only |
+| **W slider** | Window width — contrast |
+| **L slider** | Window level — brightness centre |
+| **✏ Annotate** | Toggle freehand drawing mode |
+| **🗑 Clear** | Remove all annotations from this plane |
+| **💾 Save** | Export viewport (image + annotations) as PNG |
+
+---
+
+## Window / Level
+
+W and L are the radiological standard for controlling image display:
+
+$$\text{pixel} = \text{clip}\!\left(\frac{I - (L - W/2)}{W},\ 0,\ 1\right)$$
 
 | Slider | Effect |
 |---|---|
-| **W (Window width)** | Contrast. Narrow = high contrast. Wide = low contrast. |
-| **L (Window level)** | Brightness centre. High = brighter overall. Low = darker. |
+| **W (width)** | Contrast. Narrow = high contrast. Wide = low contrast. |
+| **L (level)** | Brightness centre. High = brighter. Low = darker. |
 
-Each plane has independent W/L. This is intentional — in a CT scan you
-typically use different settings for soft tissue (W=400, L=40) vs bone
-(W=1500, L=300).
+Each plane has independent W/L — standard PACS behaviour.
 
-!!! info "Why not Brightness / Contrast?"
-    Window and Level are the clinical standard terms. They map directly
-    to the display pipeline: L sets the centre of the intensity range
-    shown, W sets how wide that range is. Values outside the window
-    clip to black or white.
+!!! info "Why not Brightness/Contrast?"
+    Window and Level are the clinical standard terms. They directly define
+    which intensity range maps to the full display scale.
 
 ---
 
 ## Colormaps
 
-Each plane has its own colormap dropdown in the viewport controls. Default is **gray**.
+Each plane has its own colormap. Default is **gray**.
 
 | Colormap | Best for |
 |---|---|
-| gray | All standard diagnostic use |
-| hot / plasma / inferno | Highlighting bright signal (e.g. gadolinium enhancement) |
-| viridis / cividis | Perceptually uniform — good for publications |
-| bone | Radiograph-style CT display |
-| jet | Legacy — avoid for diagnosis, can obscure detail |
+| gray | All standard diagnostic work |
+| hot / plasma / inferno | Highlighting bright signal |
+| viridis / cividis | Perceptually uniform — publications |
+| bone | Radiograph-style CT |
+| jet | Legacy — avoid for diagnosis |
 
 ---
 
 ## Cine playback
 
-Each plane has its own **▶ Play** button in the viewport controls. Playback runs
-at 20 fps and loops back to slice 0 when it reaches the end.
-You can play multiple planes simultaneously.
+Click **▶** on any viewport to animate through slices at 20 fps. Click
+**⏸** to pause. Each plane has independent play/pause — you can play
+multiple planes simultaneously.
 
-Click **⏸ Pause** to stop.
+---
+
+## Annotation mode
+
+1. Click **✏ Annotate** on any viewport — button turns teal
+2. Cursor changes to a crosshair
+3. Click and drag to draw freehand strokes (bright yellow)
+4. Crosshair lines lock while drawing to avoid accidental movement
+5. Click **🗑 Clear** to remove all annotations on that plane
+6. Click **💾 Save** to export the viewport with annotations as PNG
 
 ---
 
@@ -112,33 +138,32 @@ Click **⏸ Pause** to stop.
 
 Tick the **3D** checkbox in the TopBar to show the embedded VTK panel.
 
-Interact with the 3D model:
-- **Left-click drag** — rotate
-- **Right-click drag** — zoom
-- **Middle-click drag** — pan
+| Interaction | Effect |
+|---|---|
+| Left-click drag | Rotate |
+| Right-click drag | Zoom |
+| Middle-click drag | Pan |
 
-Select a transfer function **Preset** from the dropdown next to the checkbox:
+**Preset** dropdown (next to the checkbox):
 
 | Preset | Best for |
 |---|---|
-| `mri_default` | General MRI — soft tissue contrast |
-| `bone` | CT — bony structures and calcifications |
-| `angio` | MRA / CTA — vessels and blood |
-| `pet` | PET scans — hot-metal colormap |
+| `mri_default` | General MRI, soft tissue |
+| `bone` | CT, bony structures |
+| `angio` | MRA/CTA, vessels |
+| `pet` | PET scans, hot-metal colormap |
 
 ---
 
 ## Reset
 
-Click **Reset** in the TopBar to:
-- Return crosshairs to the centre of the volume
-- Restore W/L to defaults (center=0.5, width=1.0)
-- Clear zoom / pan state on all three planes
+Click **Reset** in the TopBar to restore crosshairs to centre, W/L to
+defaults, and clear all zoom/pan states on all three planes.
 
 ---
 
 ## Theme
 
-Click the **☀ / 🌙** button in the TopBar to toggle light and dark mode.
-The canvas background stays black in both modes — this is intentional.
-Medical images are read on dark backgrounds in clinical practice.
+Click **☀ / 🌙** in the TopBar to toggle light and dark mode.
+The canvas background stays black in both — medical images are always
+read on a dark background in clinical practice.
