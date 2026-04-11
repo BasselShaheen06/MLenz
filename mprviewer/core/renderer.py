@@ -120,7 +120,11 @@ class VolumeRenderer:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    def set_volume(self, data: np.ndarray) -> None:
+    def set_volume(
+        self,
+        data: np.ndarray,
+        spacing: tuple[float, float, float] | None = None,
+    ) -> None:
         """
         Load a float32 (Z, Y, X) array into the VTK pipeline.
 
@@ -128,7 +132,7 @@ class VolumeRenderer:
         Converts to float32 internally if needed.
         """
         self._data = data.astype(np.float32)
-        self._build_image_data()
+        self._build_image_data(spacing)
         self._apply_preset(self._current_preset)
 
     def set_preset(self, name: str) -> None:
@@ -182,14 +186,18 @@ class VolumeRenderer:
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
-    def _build_image_data(self) -> None:
+    def _build_image_data(self, spacing: tuple[float, float, float] | None) -> None:
         """Convert numpy array to vtkImageData and connect to mapper."""
         data = self._data
         z, y, x = data.shape
 
         image_data = vtk.vtkImageData()
         image_data.SetDimensions(x, y, z)
-        image_data.SetSpacing(1.0, 1.0, 1.0)
+        if spacing is None:
+            image_data.SetSpacing(1.0, 1.0, 1.0)
+        else:
+            sx, sy, sz = spacing
+            image_data.SetSpacing(sx, sy, sz)
         image_data.SetOrigin(0.0, 0.0, 0.0)
 
         vtk_array = numpy_support.numpy_to_vtk(

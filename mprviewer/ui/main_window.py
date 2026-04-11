@@ -14,14 +14,23 @@ Cine playback timer also lives here for the same reason.
 
 from __future__ import annotations
 
-import numpy as np
+from collections import OrderedDict
 from pathlib import Path
 
+import numpy as np
+
+from PyQt5.QtCore import Qt, QObject, QThread, QTimer, pyqtSignal
+from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (
-    QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
-    QGridLayout, QStatusBar, QLabel, QSplitter, QFrame,
+    QApplication,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QStatusBar,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt5.QtCore import Qt, QTimer, QSettings
 
 try:
     from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
@@ -29,11 +38,11 @@ try:
 except ImportError:
     _VTK_QT_AVAILABLE = False
 
-from mprviewer.core.loader import guess_loader, load_dicom_series
+from mprviewer.core.loader import VolumeData, guess_loader, load_dicom_series
 from mprviewer.core.renderer import VolumeRenderer
-from mprviewer.ui.controls import ControlPanel
+from mprviewer.ui.controls import TopBar
 from mprviewer.ui.viewport import SliceViewport
-from mprviewer.ui.theme import ThemeManager, DARK, LIGHT
+from mprviewer.ui.theme import ThemeManager
 
 _theme = ThemeManager()
 
@@ -52,19 +61,37 @@ class MainWindow(QMainWindow):
 
         # Volume state
         self._volume:     np.ndarray | None = None
+        self._spacing: tuple[float, float, float] = (1.0, 1.0, 1.0)
         self._crosshair = [0, 0, 0]   # [x, y, z] in voxel coordinates
         self._wl: list[tuple[float, float]] = [
             (0.5, 1.0), (0.5, 1.0), (0.5, 1.0)
         ]                              # [(center, width)] per plane
-        self._colormap = "gray"
+        self._colormaps: list[str] = ["gray", "gray", "gray"]
+
+        # Render caching + update throttling
+        self._slice_cache: OrderedDict[tuple[int, int], np.ndarray] = OrderedDict()
+        self._cache_max = 36
+        self._prefetch_radius = 2
+        self._update_timer = QTimer()
+        self._update_timer.setInterval(30)
+        self._update_timer.setSingleShot(True)
+        self._update_timer.timeout.connect(self._update_all)
+
+        # Background loading state
+        self._loading = False
+        self._load_thread: QThread | None = None
+        self._load_worker: LoadWorker | None = None
 
         # VTK renderer
         self._renderer = VolumeRenderer()
 
-        # Cine timer
-        self._cine_timer = QTimer()
-        self._cine_timer.setInterval(50)   # 20 fps
-        self._cine_timer.timeout.connect(self._cine_step)
+        # Cine timers (per plane)
+        self._cine_timers: list[QTimer] = []
+        for plane in (AXIAL, CORONAL, SAGITTAL):
+            timer = QTimer()
+            timer.setInterval(50)
+            timer.timeout.connect(lambda p=plane: self._cine_step(p))
+            self._cine_timers.append(timer)
 
         self._build_ui()
         self._wire_signals()
@@ -90,28 +117,43 @@ class MainWindow(QMainWindow):
         root = QWidget()
         root.setStyleSheet(f"background:{T['bg']};")
         self.setCentralWidget(root)
-        root_lay = QHBoxLayout(root)
+        root_lay = QVBoxLayout(root)
         root_lay.setContentsMargins(0, 0, 0, 0)
         root_lay.setSpacing(0)
 
-        # Sidebar
-        self._controls = ControlPanel()
-        root_lay.addWidget(self._controls)
+        # Top bar
+        self._top_bar = TopBar()
+        root_lay.addWidget(self._top_bar)
 
-        # Thin separator
-        sep = QFrame()
-        sep.setFrameShape(QFrame.VLine)
-        sep.setFixedWidth(1)
-        sep.setStyleSheet(f"background:{T['border']}; border:none;")
-        root_lay.addWidget(sep)
+        # Content row
+        content = QWidget()
+        content_lay = QHBoxLayout(content)
+        content_lay.setContentsMargins(0, 0, 0, 0)
+        content_lay.setSpacing(0)
+        root_lay.addWidget(content, stretch=1)
 
         # Viewport area
-        vp_area = QWidget()
-        vp_area.setStyleSheet(f"background:{T['bg']};")
-        vp_lay = QVBoxLayout(vp_area)
+        self._vp_area = QWidget()
+        self._vp_area.setStyleSheet(f"background:{T['bg']};")
+        vp_lay = QVBoxLayout(self._vp_area)
         vp_lay.setContentsMargins(0, 0, 0, 0)
         vp_lay.setSpacing(0)
-        root_lay.addWidget(vp_area, stretch=1)
+        content_lay.addWidget(self._vp_area, stretch=1)
+
+        # Loading overlay
+        self._loading_overlay = QWidget(self._vp_area)
+        self._loading_overlay.setVisible(False)
+        self._loading_overlay.setStyleSheet(
+            f"background:{T['overlay_bg']};"
+        )
+        overlay_lay = QVBoxLayout(self._loading_overlay)
+        overlay_lay.setContentsMargins(0, 0, 0, 0)
+        overlay_lay.setAlignment(Qt.AlignCenter)
+        overlay_label = QLabel("Loading volume…")
+        overlay_label.setStyleSheet(
+            f"color:{T['text']}; font-size:14px; font-weight:600;"
+        )
+        overlay_lay.addWidget(overlay_label)
 
         # 2×2 grid: [Axial | Sagittal] / [Coronal | VTK]
         self._grid = QGridLayout()
@@ -143,7 +185,8 @@ class MainWindow(QMainWindow):
         vtk_bar_lay.setContentsMargins(10, 0, 10, 0)
         vtk_lbl = QLabel("3D Volume")
         vtk_lbl.setStyleSheet(
-            f"color:{T['accent']}; font-size:11px; font-weight:700; background:transparent;"
+            f"color:{T['accent']}; font-size:11px; font-weight:700; "
+            "background:transparent;"
         )
         vtk_bar_lay.addWidget(vtk_lbl)
         vtk_lay.addWidget(vtk_bar)
@@ -185,30 +228,50 @@ class MainWindow(QMainWindow):
 
         vp_lay.addLayout(self._grid, stretch=1)
 
+
     # =========================================================================
     # Signal wiring
     # =========================================================================
 
     def _wire_signals(self):
-        c = self._controls
-
-        c.load_requested.connect(self._load_nifti)
-        c.dicom_load_requested.connect(self._load_dicom)
-        c.play_toggled.connect(self._on_play_toggled)
-        c.colormap_changed.connect(self._on_colormap_changed)
-        c.wl_changed.connect(self._on_wl_changed)
-        c.reset_requested.connect(self._reset)
-        c.theme_toggled.connect(self._toggle_theme)
-        c.vr_visibility_changed.connect(self._on_vr_visibility)
-        c.vr_preset_changed.connect(self._on_vr_preset)
+        self._top_bar.load_requested.connect(self._load_nifti)
+        self._top_bar.dicom_load_requested.connect(self._load_dicom)
+        self._top_bar.reset_requested.connect(self._reset)
+        self._top_bar.theme_toggled.connect(self._toggle_theme)
+        self._top_bar.vr_visibility_changed.connect(self._on_vr_visibility)
+        self._top_bar.vr_preset_changed.connect(self._on_vr_preset)
 
         for vp in self._vp:
             vp.slice_changed.connect(self._on_slice_changed)
-            vp.crosshair_clicked.connect(self._on_crosshair_clicked)
+            vp.crosshair_moved.connect(self._on_crosshair_moved)
+            vp.play_toggled.connect(self._on_play_toggled)
+            vp.cmap_changed.connect(self._on_colormap_changed)
+            vp.wl_changed.connect(self._on_wl_changed)
 
     # =========================================================================
     # Load
     # =========================================================================
+
+    def _start_load(self, source_name: str, loader_fn, status_message: str):
+        if self._loading:
+            self._status.showMessage("Loading already in progress")
+            return
+        self._set_loading_state(True, status_message)
+
+        self._load_thread = QThread()
+        self._load_worker = LoadWorker(loader_fn, source_name)
+        self._load_worker.moveToThread(self._load_thread)
+
+        self._load_thread.started.connect(self._load_worker.run)
+        self._load_worker.finished.connect(self._on_load_finished)
+        self._load_worker.failed.connect(self._on_load_failed)
+        self._load_worker.finished.connect(self._load_thread.quit)
+        self._load_worker.failed.connect(self._load_thread.quit)
+        self._load_thread.finished.connect(self._load_worker.deleteLater)
+        self._load_thread.finished.connect(self._load_thread.deleteLater)
+        self._load_thread.finished.connect(self._on_load_thread_finished)
+
+        self._load_thread.start()
 
     def _load_nifti(self):
         from PyQt5.QtWidgets import QFileDialog
@@ -218,12 +281,12 @@ class MainWindow(QMainWindow):
         )
         if not path:
             return
-        self._status.showMessage(f"Loading {Path(path).name} …")
-        try:
-            self._volume = guess_loader(path)
-            self._on_volume_loaded(Path(path).name)
-        except Exception as exc:
-            self._status.showMessage(f"Error: {exc}")
+        name = Path(path).name
+        self._start_load(
+            name,
+            lambda: guess_loader(path),
+            f"Loading {name} …",
+        )
 
     def _load_dicom(self):
         from PyQt5.QtWidgets import QFileDialog
@@ -232,16 +295,42 @@ class MainWindow(QMainWindow):
         )
         if not directory:
             return
-        self._status.showMessage(f"Loading DICOM series from {directory} …")
-        try:
-            self._volume = load_dicom_series(directory)
-            self._on_volume_loaded(Path(directory).name)
-        except Exception as exc:
-            self._status.showMessage(f"Error: {exc}")
+        name = Path(directory).name
+        self._start_load(
+            name,
+            lambda: load_dicom_series(directory),
+            f"Loading DICOM series from {directory} …",
+        )
+
+    def _on_load_finished(self, volume: VolumeData, name: str):
+        self._volume = volume.data
+        self._spacing = volume.spacing
+        self._on_volume_loaded(name)
+        self._set_loading_state(False, None)
+
+    def _on_load_failed(self, message: str):
+        self._set_loading_state(False, f"Error: {message}")
+
+    def _set_loading_state(self, loading: bool, message: str | None):
+        self._loading = loading
+        if message:
+            self._status.showMessage(message)
+        self._top_bar.set_controls_enabled(not loading)
+        self._loading_overlay.setVisible(loading)
+        if loading:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+        else:
+            QApplication.restoreOverrideCursor()
+
+    def _on_load_thread_finished(self) -> None:
+        self._load_thread = None
+        self._load_worker = None
 
     def _on_volume_loaded(self, name: str):
         vol = self._volume
         z, y, x = vol.shape
+
+        self._slice_cache.clear()
 
         # Set slider ranges
         self._vp[AXIAL].set_range(z - 1)
@@ -256,14 +345,18 @@ class MainWindow(QMainWindow):
         self._vp[CORONAL].set_slice_index(self._crosshair[1])
         self._vp[SAGITTAL].set_slice_index(self._crosshair[0])
 
+        self._prefetch_neighbors()
+
         # Load into VTK renderer
-        self._renderer.set_volume(vol)
+        self._renderer.set_volume(vol, spacing=self._spacing)
         if self._vtk_widget is not None:
             self._vtk_widget.GetRenderWindow().Render()
 
         self._update_all()
+        sx, sy, sz = self._spacing
         self._status.showMessage(
-            f"Loaded '{name}'  —  {x} × {y} × {z} voxels"
+            f"Loaded '{name}'  —  {x} × {y} × {z} voxels  "
+            f"| spacing {sx:.2f} × {sy:.2f} × {sz:.2f}"
         )
 
     # =========================================================================
@@ -279,9 +372,10 @@ class MainWindow(QMainWindow):
             self._crosshair[1] = value
         elif sender is self._vp[SAGITTAL]:
             self._crosshair[0] = value
-        self._update_all()
+        self._prefetch_neighbors()
+        self._schedule_update()
 
-    def _on_crosshair_clicked(self, x: float, y: float, plane: int):
+    def _on_crosshair_moved(self, x: float, y: float, plane: int):
         """User clicked in a viewport canvas — update crosshair position."""
         if self._volume is None:
             return
@@ -307,6 +401,7 @@ class MainWindow(QMainWindow):
         self._vp[CORONAL].set_slice_index(self._crosshair[1])
         self._vp[SAGITTAL].set_slice_index(self._crosshair[0])
 
+        self._prefetch_neighbors()
         self._update_all()
         cx, cy, cz = self._crosshair
         self._status.showMessage(
@@ -321,58 +416,99 @@ class MainWindow(QMainWindow):
         z, vy, vx = vol.shape
 
         # Axial: slice along Z, crosshair at (cx, cy)
-        axial_slice = vol[cz, :, :]
-        l, w = self._wl[AXIAL]
+        axial_slice = self._get_slice(AXIAL, cz)
+        sx, sy, sz = self._spacing
+        level, width = self._wl[AXIAL]
         self._vp[AXIAL].display(
             axial_slice, cx, cy,
-            window_center=l, window_width=w,
-            colormap=self._colormap,
+            pixel_spacing=(sx, sy),
+            window_center=level, window_width=width,
+            colormap=self._colormaps[AXIAL],
         )
 
         # Coronal: slice along Y, flip for anatomical orientation
-        coronal_slice = np.flipud(vol[:, cy, :])
-        l, w = self._wl[CORONAL]
+        coronal_slice = self._get_slice(CORONAL, cy)
+        level, width = self._wl[CORONAL]
         self._vp[CORONAL].display(
             coronal_slice, cx, z - 1 - cz,
-            window_center=l, window_width=w,
-            colormap=self._colormap,
+            pixel_spacing=(sx, sz),
+            window_center=level, window_width=width,
+            colormap=self._colormaps[CORONAL],
         )
 
         # Sagittal: slice along X, flip for anatomical orientation
-        sagittal_slice = np.flipud(vol[:, :, cx])
-        l, w = self._wl[SAGITTAL]
+        sagittal_slice = self._get_slice(SAGITTAL, cx)
+        level, width = self._wl[SAGITTAL]
         self._vp[SAGITTAL].display(
             sagittal_slice, cy, z - 1 - cz,
-            window_center=l, window_width=w,
-            colormap=self._colormap,
+            pixel_spacing=(sy, sz),
+            window_center=level, window_width=width,
+            colormap=self._colormaps[SAGITTAL],
         )
+
+    def _schedule_update(self) -> None:
+        if not self._update_timer.isActive():
+            self._update_timer.start()
+        else:
+            self._update_timer.start()
+
+    def _get_slice(self, plane: int, index: int) -> np.ndarray:
+        key = (plane, index)
+        if key in self._slice_cache:
+            self._slice_cache.move_to_end(key)
+            return self._slice_cache[key]
+
+        vol = self._volume
+        if plane == AXIAL:
+            data = vol[index, :, :]
+        elif plane == CORONAL:
+            data = np.flipud(vol[:, index, :])
+        else:
+            data = np.flipud(vol[:, :, index])
+
+        self._slice_cache[key] = data
+        if len(self._slice_cache) > self._cache_max:
+            self._slice_cache.popitem(last=False)
+        return data
 
     # =========================================================================
     # Controls
     # =========================================================================
 
-    def _on_colormap_changed(self, name: str):
-        self._colormap = name
-        self._update_all()
+    def _on_colormap_changed(self, plane: int, name: str):
+        self._colormaps[plane] = name
+        self._schedule_update()
 
-    def _on_wl_changed(self, idx: int, center: float, width: float):
-        self._wl[idx] = (center, width)
-        self._update_all()
+    def _on_wl_changed(self, plane: int, center: float, width: float):
+        self._wl[plane] = (center, width)
+        self._schedule_update()
 
-    def _on_play_toggled(self, playing: bool):
+    def _on_play_toggled(self, plane: int, playing: bool):
+        timer = self._cine_timers[plane]
         if playing:
-            self._cine_timer.start()
+            timer.start()
         else:
-            self._cine_timer.stop()
+            timer.stop()
 
-    def _cine_step(self):
+    def _cine_step(self, plane: int) -> None:
         if self._volume is None:
             return
-        z = self._volume.shape[0]
-        next_z = (self._crosshair[2] + 1) % z
-        self._crosshair[2] = next_z
-        self._vp[AXIAL].set_slice_index(next_z)
-        self._update_all()
+        z, y, x = self._volume.shape
+        if plane == AXIAL:
+            next_idx = (self._crosshair[2] + 1) % z
+            self._crosshair[2] = next_idx
+            self._vp[AXIAL].set_slice_index(next_idx)
+        elif plane == CORONAL:
+            next_idx = (self._crosshair[1] + 1) % y
+            self._crosshair[1] = next_idx
+            self._vp[CORONAL].set_slice_index(next_idx)
+        else:
+            next_idx = (self._crosshair[0] + 1) % x
+            self._crosshair[0] = next_idx
+            self._vp[SAGITTAL].set_slice_index(next_idx)
+
+        self._prefetch_neighbors()
+        self._schedule_update()
 
     def _on_vr_visibility(self, visible: bool):
         self._vtk_container.setVisible(visible)
@@ -393,15 +529,38 @@ class MainWindow(QMainWindow):
             return
         z, y, x = self._volume.shape
         self._crosshair = [x // 2, y // 2, z // 2]
+        self._slice_cache.clear()
         self._vp[AXIAL].set_slice_index(self._crosshair[2])
         self._vp[CORONAL].set_slice_index(self._crosshair[1])
         self._vp[SAGITTAL].set_slice_index(self._crosshair[0])
         for vp in self._vp:
             vp.reset_zoom()
-        self._controls.reset_wl()
         self._wl = [(0.5, 1.0), (0.5, 1.0), (0.5, 1.0)]
+        self._prefetch_neighbors()
         self._update_all()
         self._status.showMessage("View reset to default")
+
+    def _prefetch_neighbors(self) -> None:
+        if self._volume is None:
+            return
+        z, y, x = self._volume.shape
+        cx, cy, cz = self._crosshair
+        radius = self._prefetch_radius
+
+        for dz in range(-radius, radius + 1):
+            zi = cz + dz
+            if 0 <= zi < z:
+                self._get_slice(AXIAL, zi)
+
+        for dy in range(-radius, radius + 1):
+            yi = cy + dy
+            if 0 <= yi < y:
+                self._get_slice(CORONAL, yi)
+
+        for dx in range(-radius, radius + 1):
+            xi = cx + dx
+            if 0 <= xi < x:
+                self._get_slice(SAGITTAL, xi)
 
     # =========================================================================
     # Keyboard panning
@@ -421,9 +580,9 @@ class MainWindow(QMainWindow):
 
     def _pan_focused(self, dx: int, dy: int):
         """Pan whichever viewport the mouse is over."""
-        from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtGui import QCursor
         widget_under = QApplication.widgetAt(QCursor.pos())
+        if widget_under is None:
+            return
         for vp in self._vp:
             if widget_under is vp or vp.isAncestorOf(widget_under):
                 ax = vp._ax
@@ -452,16 +611,48 @@ class MainWindow(QMainWindow):
             f"background:{T['status_bg']}; color:{T['text_sec']}; "
             f"font-size:11px; border-top:1px solid {T['border']};"
         )
+        self._loading_overlay.setStyleSheet(f"background:{T['overlay_bg']};")
+        self._top_bar.apply_theme()
         for vp in self._vp:
             vp.apply_theme()
-        self._controls.apply_theme()
+
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self._loading_overlay is not None:
+            self._loading_overlay.setGeometry(self._vp_area.rect())
 
     # =========================================================================
     # Close
     # =========================================================================
 
     def closeEvent(self, event):
-        self._cine_timer.stop()
+        for timer in self._cine_timers:
+            timer.stop()
+        if self._load_thread is not None:
+            try:
+                if self._load_thread.isRunning():
+                    self._load_thread.quit()
+                    self._load_thread.wait(2000)
+            except RuntimeError:
+                pass
         if self._vtk_widget is not None:
             self._vtk_widget.GetRenderWindow().Finalize()
         event.accept()
+
+
+class LoadWorker(QObject):
+    finished = pyqtSignal(object, str)
+    failed = pyqtSignal(str)
+
+    def __init__(self, loader_fn, source_name: str):
+        super().__init__()
+        self._loader_fn = loader_fn
+        self._source_name = source_name
+
+    def run(self) -> None:
+        try:
+            volume = self._loader_fn()
+            self.finished.emit(volume, self._source_name)
+        except Exception as exc:
+            self.failed.emit(str(exc))
