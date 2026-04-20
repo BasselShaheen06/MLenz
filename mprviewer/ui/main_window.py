@@ -579,20 +579,16 @@ class MainWindow(QMainWindow):
             self._pan_focused(0, step)
 
     def _pan_focused(self, dx: int, dy: int):
-        """Pan whichever viewport the mouse is over."""
+        """Pan whichever viewport the mouse is over (pyqtgraph ViewBox)."""
         widget_under = QApplication.widgetAt(QCursor.pos())
         if widget_under is None:
             return
         for vp in self._vp:
             if widget_under is vp or vp.isAncestorOf(widget_under):
-                ax = vp._ax
-                xlim = ax.get_xlim()
-                ylim = ax.get_ylim()
-                ax.set_xlim(xlim[0] + dx, xlim[1] + dx)
-                ax.set_ylim(ylim[0] + dy, ylim[1] + dy)
-                vp._xlim = ax.get_xlim()
-                vp._ylim = ax.get_ylim()
-                vp._canvas.draw_idle()
+                view = vp._pg_view.getView()
+                vr = view.viewRange()           # [[xmin,xmax],[ymin,ymax]]
+                view.setXRange(vr[0][0] + dx, vr[0][1] + dx, padding=0)
+                view.setYRange(vr[1][0] + dy, vr[1][1] + dy, padding=0)
                 return
 
     # =========================================================================
