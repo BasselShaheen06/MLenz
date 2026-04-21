@@ -1,40 +1,52 @@
 # MLenz
 
-**Multi-Planar Reconstruction MRI viewer — NIfTI, DICOM, embedded 3D volume rendering.**
+<div class="mlenz-hero">
+    <div class="mlenz-hero__bg"></div>
+    <div class="mlenz-hero__content">
+        <div class="mlenz-hero__kicker">MRI viewer for fast MPR review</div>
+        <h1 class="mlenz-hero__title">MLenz</h1>
+        <p class="mlenz-hero__sub">
+            Multi-Planar Reconstruction for NIfTI and DICOM, with synchronized
+            crosshairs, slice cine, and embedded 3D volume rendering.
+        </p>
+        <div class="mlenz-hero__cta">
+            <a class="mlenz-btn mlenz-btn--primary" href="installation/">Get started</a>
+            <a class="mlenz-btn" href="usage/">View the guide</a>
+            <a class="mlenz-btn mlenz-btn--ghost" href="https://github.com/BasselShaheen06/MLenz">GitHub</a>
+        </div>
+        <div class="mlenz-hero__badges">
+            <span>PyQt5</span>
+            <span>VTK GPU</span>
+            <span>SimpleITK</span>
+            <span>3-plane sync</span>
+            <span>Tour overlay</span>
+        </div>
+    </div>
+</div>
 
 ---
 
 ## Demo
 
-> 📹 **Demo coming soon**
->
-> Record with ScreenToGif: load a NIfTI brain scan → drag crosshair across
-> all three planes → switch colormap on one plane → enable 3D viewport →
-> draw an annotation → save annotated PNG
-
-<!-- ![MLenz demo](../assets/demo/demo.gif) -->
+<div class="mlenz-demo">
+    <div class="mlenz-demo__placeholder">Demo GIF goes here</div>
+    <div class="mlenz-demo__notes">
+        Planned flow: load volume → drag crosshair → switch colormap → enable 3D →
+        annotate a slice → export PNG.
+    </div>
+</div>
 
 ---
 
 ## Screenshots
 
-> 📸 **Screenshots coming soon** — take after first successful run
-
-<!-- Uncomment once captured:
-
-### Main view — three synchronized planes
-![Three MPR planes](../assets/demo/screenshot_main.png)
-
-### Annotation mode
-![Freehand annotation on a brain slice](../assets/demo/screenshot_annotate.png)
-
-### 3D volume rendering
-![Embedded VTK volume panel](../assets/demo/screenshot_3d.png)
-
-### Light mode
-![Light mode](../assets/demo/screenshot_light.png)
-
--->
+<div class="mlenz-grid">
+    <div class="mlenz-card">Main view (MPR planes)</div>
+    <div class="mlenz-card">Per-viewport controls</div>
+    <div class="mlenz-card">Annotation mode</div>
+    <div class="mlenz-card">3D volume rendering</div>
+    <div class="mlenz-card">Light mode</div>
+</div>
 
 ---
 
