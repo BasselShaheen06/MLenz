@@ -20,6 +20,7 @@ Signals:
 
 from __future__ import annotations
 
+import math
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import ImageView, InfiniteLine, ScatterPlotItem
@@ -43,6 +44,9 @@ COLORMAPS = ["gray", "viridis", "plasma", "inferno",
 CROSSHAIR_COLOR = "#EF5350"
 CROSSHAIR_HOVER = "#FF8A80"
 ANNOT_COLOR     = "#FFD600"
+ANNOT_PEAK_ALPHA = 1.0
+ANNOT_GAUSS_SIGMA = 3.0
+ANNOT_GAUSS_EXTENT = 4
 
 
 class SliceViewport(QWidget):
@@ -63,6 +67,8 @@ class SliceViewport(QWidget):
         self._annot_items: list[pg.PlotDataItem] = []
         self._live_item:   pg.PlotDataItem | None = None
         self._current_stroke: list[QPointF]       = []
+        self._slice_annots: dict[int, list[pg.PlotDataItem]] = {}
+        self._current_slice = 0
 
         T = _theme.palette()
         self.setStyleSheet(f"background:{T['surface']}; border:none;")
@@ -244,6 +250,8 @@ class SliceViewport(QWidget):
         self._slider.setValue(index)
         self._slider.blockSignals(False)
         self._slice_lbl.setText(f"{index + 1} / {self._slider.maximum() + 1}")
+        self._current_slice = index
+        self._refresh_annotations_visibility()
 
     def set_crosshair(self, x: float, y: float) -> None:
         self._blocking = True
@@ -298,17 +306,17 @@ class SliceViewport(QWidget):
         self._pg_view.autoRange()
 
     def clear_annotations(self) -> None:
-        for item in self._annot_items:
-            try:
-                self._pg_view.removeItem(item)
-            except Exception:
-                pass
+        for items in self._slice_annots.values():
+            for item in items:
+                    if item.scene() is not None:
+                        self._pg_view.removeItem(item)
         if self._live_item is not None:
             try:
                 self._pg_view.removeItem(self._live_item)
             except Exception:
                 pass
         self._annot_items.clear()
+        self._slice_annots.clear()
         self._live_item = None
         self._current_stroke.clear()
         self._status_lbl.setText("")
@@ -363,6 +371,7 @@ class SliceViewport(QWidget):
                 self._pg_view.getView(), event
             )
             return
+        self._current_slice = self._slider.value()
         self._current_stroke = []
         self._live_item = None
         pos = self._pg_view.getView().mapToView(event.pos())
@@ -388,6 +397,9 @@ class SliceViewport(QWidget):
             return
         if len(self._current_stroke) > 1 and self._live_item is not None:
             self._annot_items.append(self._live_item)
+            self._slice_annots.setdefault(self._current_slice, []).append(
+                self._live_item
+            )
         elif self._live_item is not None:
             try:
                 self._pg_view.removeItem(self._live_item)
@@ -395,6 +407,7 @@ class SliceViewport(QWidget):
                 pass
         self._live_item = None
         self._current_stroke.clear()
+        self._refresh_annotations_visibility()
         event.accept()
 
     def _update_live_stroke(self) -> None:
@@ -430,6 +443,8 @@ class SliceViewport(QWidget):
 
     def _on_slider(self, value: int) -> None:
         self._slice_lbl.setText(f"{value + 1} / {self._slider.maximum() + 1}")
+        self._current_slice = value
+        self._refresh_annotations_visibility()
         self.slice_changed.emit(value)
 
     def _on_drag(self) -> None:
@@ -465,6 +480,20 @@ class SliceViewport(QWidget):
     def _emit_wl(self) -> None:
         center, width = self.window_level()
         self.wl_changed.emit(self._plane_index, center, width)
+
+    def _refresh_annotations_visibility(self) -> None:
+        for slice_idx, items in self._slice_annots.items():
+            for item in items:
+                if item.scene() is not None:
+                    self._pg_view.removeItem(item)
+                distance = abs(slice_idx - self._current_slice)
+                if distance > ANNOT_GAUSS_EXTENT:
+                    continue
+                alpha = ANNOT_PEAK_ALPHA * math.exp(
+                    -(distance ** 2) / (2.0 * ANNOT_GAUSS_SIGMA ** 2)
+                )
+                item.setOpacity(float(alpha))
+                self._pg_view.addItem(item)
 
 
 # ── style helpers ──────────────────────────────────────────────────────────────

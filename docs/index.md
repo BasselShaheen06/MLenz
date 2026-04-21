@@ -1,6 +1,6 @@
-# MPRViewer
+# MLenz
 
-**Multi-Planar Reconstruction medical image viewer — NIfTI, DICOM, embedded 3D volume rendering.**
+**Multi-Planar Reconstruction MRI viewer — NIfTI, DICOM, embedded 3D volume rendering.**
 
 ---
 
@@ -12,7 +12,7 @@
 > all three planes → switch colormap on one plane → enable 3D viewport →
 > draw an annotation → save annotated PNG
 
-<!-- ![MPRViewer demo](../assets/demo/demo.gif) -->
+<!-- ![MLenz demo](../assets/demo/demo.gif) -->
 
 ---
 
@@ -42,17 +42,20 @@
 
 | Feature | Details |
 |---|---|
-| **File formats** | NIfTI `.nii`/`.nii.gz` · DICOM series · single DICOM |
+| **File formats** | NIfTI `.nii`/`.nii.gz` · single DICOM `.dcm` |
 | **MPR planes** | Axial · Coronal · Sagittal — synchronized |
 | **Crosshairs** | Draggable — move any line, all three planes update in real time |
 | **Crosshair circle** | Hollow red dot marks the intersection point |
 | **Per-viewport controls** | Play/Pause · colormap · W/L sliders — embedded in each viewport |
+| **Global cine** | ▶ All / ⏸ All — play every plane together |
 | **Annotation** | Freehand drawing, clear, export viewport as PNG |
 | **3D rendering** | VTK GPU ray-cast embedded as 4th panel |
 | **Transfer functions** | MRI default · Bone · Angio · PET presets |
 | **Theme** | Dark (clinical default) + light mode toggle |
 | **Background loading** | QThread — UI stays responsive |
 | **Slice cache** | LRU + prefetch for fast navigation |
+| **Start screen** | fMRI-style gradient splash with dark overlay |
+| **Guided tour** | Step-by-step overlay with spotlight prompts |
 
 ---
 
@@ -75,8 +78,8 @@ graph TD
 ## Quick start
 
 ```bash
-git clone https://github.com/BasselShaheen06/MPR_Viewer.git
-cd MPR_Viewer
+git clone https://github.com/BasselShaheen06/MLenz.git
+cd MLenz
 python -m venv venv
 venv\Scripts\activate       # Windows
 source venv/bin/activate    # macOS / Linux

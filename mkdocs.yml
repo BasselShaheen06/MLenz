@@ -1,9 +1,9 @@
-site_name: MPRViewer
-site_description: Multi-Planar Reconstruction medical image viewer — NIfTI, DICOM, VTK volume rendering
+site_name: MLenz
+site_description: Multi-Planar Reconstruction MRI viewer — NIfTI, DICOM, VTK volume rendering
 site_author: Bassel Shaheen
-site_url: https://basselshaheen06.github.io/MPR_Viewer
-repo_url: https://github.com/BasselShaheen06/MPR_Viewer
-repo_name: BasselShaheen06/MPR_Viewer
+site_url: https://basselshaheen06.github.io/MLenz
+repo_url: https://github.com/BasselShaheen06/MLenz
+repo_name: BasselShaheen06/MLenz
 
 copyright: >
   MIT License &nbsp;·&nbsp; Bassel Shaheen, Cairo University SBME &nbsp;·&nbsp;

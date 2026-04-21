@@ -35,6 +35,8 @@ class TopBar(QWidget):
 
     load_requested = pyqtSignal()
     dicom_load_requested = pyqtSignal()
+    global_play_toggled = pyqtSignal(bool)
+    tour_requested = pyqtSignal()
     reset_requested = pyqtSignal()
     theme_toggled = pyqtSignal()
     vr_visibility_changed = pyqtSignal(bool)
@@ -53,9 +55,10 @@ class TopBar(QWidget):
         layout.setContentsMargins(16, 8, 16, 8)
         layout.setSpacing(12)
 
-        title = QLabel("MPRViewer")
+        title = QLabel("MLenz")
         title.setStyleSheet(
             f"color:{T['accent']}; font-size:15px; font-weight:800;"
+            "background: transparent;"
         )
         layout.addWidget(title)
 
@@ -64,9 +67,15 @@ class TopBar(QWidget):
         self._load_btn = _btn_primary("Load NIfTI", T)
         self._dicom_btn = _btn_secondary("Load DICOM", T)
         self._load_btn.setToolTip("Load .nii or .nii.gz file")
-        self._dicom_btn.setToolTip("Load a folder of DICOM files")
+        self._dicom_btn.setToolTip("Load a single .dcm file")
         layout.addWidget(self._load_btn)
         layout.addWidget(self._dicom_btn)
+
+        self._play_all_btn = _btn_secondary("▶ All", T)
+        self._play_all_btn.setCheckable(True)
+        self._play_all_btn.setToolTip("Play/Pause cine on all planes")
+        self._play_all_btn.toggled.connect(self._on_play_all_toggle)
+        layout.addWidget(self._play_all_btn)
 
         layout.addStretch()
 
@@ -83,6 +92,10 @@ class TopBar(QWidget):
         self._reset_btn.setToolTip("Reset window/level and crosshair")
         layout.addWidget(self._reset_btn)
 
+        self._tour_btn = _btn_secondary("Tour", T)
+        self._tour_btn.setToolTip("Guided tour of the interface")
+        layout.addWidget(self._tour_btn)
+
         self._theme_btn = _btn_secondary("", T)
         self._theme_btn.setFixedWidth(36)
         self._theme_btn.setToolTip("Toggle light / dark mode")
@@ -92,6 +105,7 @@ class TopBar(QWidget):
         self._load_btn.clicked.connect(self.load_requested)
         self._dicom_btn.clicked.connect(self.dicom_load_requested)
         self._reset_btn.clicked.connect(self.reset_requested)
+        self._tour_btn.clicked.connect(self.tour_requested)
         self._theme_btn.clicked.connect(self._on_theme)
         self._vr_cb.toggled.connect(self.vr_visibility_changed)
         self._vr_preset_combo.currentTextChanged.connect(self.vr_preset_changed)
@@ -100,9 +114,11 @@ class TopBar(QWidget):
         for widget in [
             self._load_btn,
             self._dicom_btn,
+            self._play_all_btn,
             self._vr_cb,
             self._vr_preset_combo,
             self._reset_btn,
+            self._tour_btn,
             self._theme_btn,
         ]:
             widget.setEnabled(enabled)
@@ -113,7 +129,9 @@ class TopBar(QWidget):
         self.setStyleSheet(f"background:{T['panel']};")
         _apply_btn_primary(self._load_btn, T)
         _apply_btn_secondary(self._dicom_btn, T)
+        _apply_btn_secondary(self._play_all_btn, T)
         _apply_btn_secondary(self._reset_btn, T)
+        _apply_btn_secondary(self._tour_btn, T)
         _apply_btn_secondary(self._theme_btn, T)
         _apply_combo(self._vr_preset_combo, T)
         _apply_checkbox(self._vr_cb, T)
@@ -124,6 +142,22 @@ class TopBar(QWidget):
 
     def _update_theme_icon(self) -> None:
         self._theme_btn.setText("☀" if _theme.is_dark() else "🌙")
+
+    def _on_play_all_toggle(self, checked: bool) -> None:
+        self._play_all_btn.setText("⏸ All" if checked else "▶ All")
+        self.global_play_toggled.emit(checked)
+
+    def tour_targets(self) -> dict[str, QWidget]:
+        return {
+            "load_nifti": self._load_btn,
+            "load_dicom": self._dicom_btn,
+            "play_all": self._play_all_btn,
+            "vr_toggle": self._vr_cb,
+            "vr_preset": self._vr_preset_combo,
+            "reset": self._reset_btn,
+            "tour": self._tour_btn,
+            "theme": self._theme_btn,
+        }
 
 
 

@@ -5,8 +5,8 @@ Thanks for taking the time to contribute.
 ## Setup
 
 ```bash
-git clone https://github.com/BasselShaheen06/MPR_Viewer.git
-cd MPR_Viewer
+git clone https://github.com/BasselShaheen06/MLenz.git
+cd MLenz
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt

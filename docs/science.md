@@ -22,7 +22,7 @@ Where $V$ has shape $(Z, Y, X)$.
 | Coronal | Anterior → Posterior | Superior at top |
 | Sagittal | Left → Right | Superior at top |
 
-MPRViewer flips Coronal and Sagittal slices vertically before display
+MLenz flips Coronal and Sagittal slices vertically before display
 so superior is always at the top — matching clinical convention.
 
 ### Crosshair synchronisation
@@ -54,7 +54,7 @@ Standard CT presets (Hounsfield Units):
 | Bone | 400 | 1800 |
 | Lung | −600 | 1500 |
 
-MPRViewer normalises all intensities to [0, 1] on load. L and W are
+MLenz normalises all intensities to [0, 1] on load. L and W are
 expressed as fractions. The default (L=0.5, W=1.0) shows the full range.
 
 ---
@@ -69,7 +69,7 @@ and integrates contributions along the path.
 - **Colour transfer function** → intensity to RGB
 - **Opacity transfer function** → intensity to transparency
 
-MPRViewer uses `vtkGPUVolumeRayCastMapper` — GPU-accelerated OpenGL ray
+MLenz uses `vtkGPUVolumeRayCastMapper` — GPU-accelerated OpenGL ray
 casting, the same approach used by 3D Slicer and OsiriX.
 
 ### Transfer function presets
@@ -89,17 +89,19 @@ NIfTI stores a 3-D intensity array plus a 348-byte header containing
 voxel dimensions, data type, and an orientation matrix (qform/sform)
 that maps voxel indices to millimetre coordinates in patient space.
 
-MPRViewer uses SimpleITK's orientation correction to reorient all loaded
+MLenz uses SimpleITK's orientation correction to reorient all loaded
 volumes to a consistent LPS+ orientation before display.
 
 ---
 
-## DICOM series loading
+## DICOM loading
 
-DICOM stores each 2-D slice as a separate file. Sorting by filename is
-unreliable. MPRViewer uses SimpleITK's `GetGDCMSeriesFileNames()` which
-sorts by the `ImagePositionPatient` DICOM tag — the physical position of
-each slice guaranteed by the scanner — giving correct spatial order.
+DICOM stores each 2-D slice as a separate file. In the UI, MLenz loads a
+single `.dcm` file for quick inspection. The core loader still supports
+full series loading for scripts and notebooks. Sorting by filename is
+unreliable, so series loading uses SimpleITK's `GetGDCMSeriesFileNames()`
+which sorts by the `ImagePositionPatient` DICOM tag — the physical position
+of each slice guaranteed by the scanner — giving correct spatial order.
 
 Physical voxel spacing from `PixelSpacing` and `SliceThickness` tags is
 applied to the viewport aspect ratio so non-isotropic acquisitions

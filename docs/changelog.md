@@ -25,6 +25,7 @@ was fully rewritten into a modular package.
 - **Crosshair intersection circle** — `ScatterPlotItem` hollow dot
 - **Per-viewport embedded controls** — play/pause, colormap, W/L, annotate,
   clear, save — all inside each viewport's own control bar
+- **Global cine control** — ▶ All / ⏸ All to play every plane at once
 - **Freehand annotation** — draw on any plane, clear, export as PNG
 - **Embedded VTK 3D panel** — volume rendering in the Qt layout, not a
   blocking separate window
@@ -33,6 +34,8 @@ was fully rewritten into a modular package.
 - **LRU slice cache** — 36 slots + ±2 neighbor prefetch
 - **Physical voxel spacing** — applied to aspect ratio from DICOM/NIfTI headers
 - **Dark / light mode** — system preference on first launch, saved to `QSettings`
+- **Start screen** — fMRI-style gradient splash with dark overlay
+- **Guided tour** — spotlight overlay with step-by-step prompts
 
 ### Fixed (from original)
 

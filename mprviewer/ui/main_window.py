@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QStatusBar,
     QVBoxLayout,
     QWidget,
@@ -38,11 +39,12 @@ try:
 except ImportError:
     _VTK_QT_AVAILABLE = False
 
-from mprviewer.core.loader import VolumeData, guess_loader, load_dicom_series
+from mprviewer.core.loader import VolumeData, guess_loader, load_single_dicom
 from mprviewer.core.renderer import VolumeRenderer
 from mprviewer.ui.controls import TopBar
 from mprviewer.ui.viewport import SliceViewport
 from mprviewer.ui.theme import ThemeManager
+from mprviewer.ui.tour import TourOverlay, TourStep
 
 _theme = ThemeManager()
 
@@ -56,7 +58,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MPRViewer")
+        self.setWindowTitle("MLenz")
         self.setGeometry(80, 80, 1480, 880)
 
         # Volume state
@@ -111,7 +113,9 @@ class MainWindow(QMainWindow):
             f"font-size:11px; border-top:1px solid {T['border']};"
         )
         self.setStatusBar(self._status)
-        self._status.showMessage("Load a NIfTI or DICOM file to begin")
+        self._status.showMessage(
+            "Load a NIfTI (.nii/.nii.gz) or DICOM (.dcm) file to begin"
+        )
 
         # Root widget
         root = QWidget()
@@ -139,6 +143,40 @@ class MainWindow(QMainWindow):
         vp_lay.setContentsMargins(0, 0, 0, 0)
         vp_lay.setSpacing(0)
         content_lay.addWidget(self._vp_area, stretch=1)
+
+        # Start screen
+        self._start_screen = QWidget(root)
+        self._start_screen.setVisible(True)
+        self._start_screen.setStyleSheet(
+            "background: qlineargradient("
+            "x1:0, y1:0, x2:1, y2:1, "
+            "stop:0 #081012, stop:0.2 #08343A, stop:0.4 #0F6E5A, "
+            "stop:0.6 #D4A500, stop:0.8 #D65A00, stop:1 #7A1B52);"
+        )
+        start_lay = QVBoxLayout(self._start_screen)
+        start_lay.setContentsMargins(0, 0, 0, 0)
+        start_lay.setSpacing(0)
+
+        self._start_overlay = QWidget(self._start_screen)
+        self._start_overlay.setStyleSheet("background: rgba(0, 0, 0, 0.2);")
+        overlay_lay = QVBoxLayout(self._start_overlay)
+        overlay_lay.setContentsMargins(0, 0, 0, 0)
+        overlay_lay.setAlignment(Qt.AlignCenter)
+
+        title = QLabel("MLenz")
+        title.setStyleSheet(
+            "color:#E0F2F1; font-size:56px; font-weight:900;"
+            "background: transparent;"
+        )
+        overlay_lay.addWidget(title)
+
+        start_lay.addWidget(self._start_overlay, stretch=1)
+        self._start_screen.setGeometry(root.rect())
+        QTimer.singleShot(5000, self._hide_start_screen)
+
+        # Tour overlay
+        self._tour_overlay = TourOverlay(root)
+        self._tour_overlay.setGeometry(root.rect())
 
         # Loading overlay
         self._loading_overlay = QWidget(self._vp_area)
@@ -227,6 +265,7 @@ class MainWindow(QMainWindow):
         self._grid.setColumnStretch(1, 1)
 
         vp_lay.addLayout(self._grid, stretch=1)
+        self._start_screen.raise_()
 
 
     # =========================================================================
@@ -236,6 +275,8 @@ class MainWindow(QMainWindow):
     def _wire_signals(self):
         self._top_bar.load_requested.connect(self._load_nifti)
         self._top_bar.dicom_load_requested.connect(self._load_dicom)
+        self._top_bar.global_play_toggled.connect(self._on_global_play_toggled)
+        self._top_bar.tour_requested.connect(self._start_tour)
         self._top_bar.reset_requested.connect(self._reset)
         self._top_bar.theme_toggled.connect(self._toggle_theme)
         self._top_bar.vr_visibility_changed.connect(self._on_vr_visibility)
@@ -281,6 +322,21 @@ class MainWindow(QMainWindow):
         )
         if not path:
             return
+        suffix = "".join(Path(path).suffixes).lower()
+        if suffix == ".dcm":
+            QMessageBox.warning(
+                self,
+                "Wrong file type",
+                "This button is for NIfTI only. Use Load DICOM for .dcm files.",
+            )
+            return
+        if suffix not in (".nii", ".nii.gz"):
+            QMessageBox.warning(
+                self,
+                "Unsupported file",
+                "Please select a .nii or .nii.gz file.",
+            )
+            return
         name = Path(path).name
         self._start_load(
             name,
@@ -290,22 +346,31 @@ class MainWindow(QMainWindow):
 
     def _load_dicom(self):
         from PyQt5.QtWidgets import QFileDialog
-        directory = QFileDialog.getExistingDirectory(
-            self, "Select DICOM folder"
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Open DICOM file", "",
+            "DICOM files (*.dcm);;All files (*)",
         )
-        if not directory:
+        if not path:
             return
-        name = Path(directory).name
+        if Path(path).suffix.lower() != ".dcm":
+            QMessageBox.warning(
+                self,
+                "Unsupported file",
+                "Please select a .dcm file.",
+            )
+            return
+        name = Path(path).name
         self._start_load(
             name,
-            lambda: load_dicom_series(directory),
-            f"Loading DICOM series from {directory} …",
+            lambda: load_single_dicom(path),
+            f"Loading DICOM file {name} …",
         )
 
     def _on_load_finished(self, volume: VolumeData, name: str):
         self._volume = volume.data
         self._spacing = volume.spacing
         self._on_volume_loaded(name)
+        self._hide_start_screen()
         self._set_loading_state(False, None)
 
     def _on_load_failed(self, message: str):
@@ -319,8 +384,13 @@ class MainWindow(QMainWindow):
         self._loading_overlay.setVisible(loading)
         if loading:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            self._loading_overlay.raise_()
         else:
             QApplication.restoreOverrideCursor()
+
+    def _hide_start_screen(self) -> None:
+        if self._start_screen is not None:
+            self._start_screen.setVisible(False)
 
     def _on_load_thread_finished(self) -> None:
         self._load_thread = None
@@ -490,6 +560,63 @@ class MainWindow(QMainWindow):
         else:
             timer.stop()
 
+    def _on_global_play_toggled(self, playing: bool) -> None:
+        for timer in self._cine_timers:
+            if playing:
+                timer.start()
+            else:
+                timer.stop()
+        for vp in self._vp:
+            vp.set_playing(playing)
+
+    def _start_tour(self) -> None:
+        self._hide_start_screen()
+        targets = self._top_bar.tour_targets()
+        steps = [
+            TourStep(
+                targets.get("load_nifti"),
+                "Load NIfTI",
+                "Open a .nii or .nii.gz file to view a 3D volume.",
+            ),
+            TourStep(
+                targets.get("load_dicom"),
+                "Load DICOM",
+                "Open a single .dcm file for quick inspection.",
+            ),
+            TourStep(
+                targets.get("play_all"),
+                "Play All",
+                "Play or pause cine on all three planes at once.",
+            ),
+            TourStep(
+                targets.get("vr_toggle"),
+                "3D Volume",
+                "Toggle the embedded VTK volume rendering panel.",
+            ),
+            TourStep(
+                targets.get("vr_preset"),
+                "3D Preset",
+                "Choose a transfer function preset for 3D rendering.",
+            ),
+            TourStep(
+                self._vp[AXIAL],
+                "Slice Viewports",
+                "Each plane has its own slider, colormap, and W/L controls.",
+            ),
+            TourStep(
+                targets.get("reset"),
+                "Reset",
+                "Restore crosshair, W/L, and zoom to defaults.",
+            ),
+            TourStep(
+                targets.get("theme"),
+                "Theme",
+                "Switch between light and dark modes.",
+            ),
+        ]
+        self._tour_overlay.setGeometry(self.centralWidget().rect())
+        self._tour_overlay.start(steps)
+
     def _cine_step(self, plane: int) -> None:
         if self._volume is None:
             return
@@ -617,6 +744,10 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         if self._loading_overlay is not None:
             self._loading_overlay.setGeometry(self._vp_area.rect())
+        if self._start_screen is not None:
+            self._start_screen.setGeometry(self.centralWidget().rect())
+        if self._tour_overlay is not None:
+            self._tour_overlay.setGeometry(self.centralWidget().rect())
 
     # =========================================================================
     # Close

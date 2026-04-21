@@ -9,8 +9,8 @@
 ## Step 1 — Clone
 
 ```bash
-git clone https://github.com/BasselShaheen06/MPR_Viewer.git
-cd MPR_Viewer
+git clone https://github.com/BasselShaheen06/MLenz.git
+cd MLenz
 ```
 
 ## Step 2 — Virtual environment

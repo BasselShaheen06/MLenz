@@ -4,14 +4,14 @@
 
 Open an issue first — use the templates:
 
-- [Bug report](https://github.com/BasselShaheen06/MPR_Viewer/issues/new?template=bug_report.md)
-- [Feature request](https://github.com/BasselShaheen06/MPR_Viewer/issues/new?template=feature_request.md)
+- [Bug report](https://github.com/BasselShaheen06/MLenz/issues/new?template=bug_report.md)
+- [Feature request](https://github.com/BasselShaheen06/MLenz/issues/new?template=feature_request.md)
 
 ## Setup
 
 ```bash
-git clone https://github.com/BasselShaheen06/MPR_Viewer.git
-cd MPR_Viewer
+git clone https://github.com/BasselShaheen06/MLenz.git
+cd MLenz
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt

@@ -5,7 +5,9 @@
 | Button | What it does |
 |---|---|
 | **Load NIfTI** | Opens a file picker for `.nii` or `.nii.gz` |
-| **Load DICOM** | Opens a folder picker — reads the series inside, sorted by position |
+| **Load DICOM** | Opens a file picker for a single `.dcm` |
+| **▶ All / ⏸ All** | Play or pause cine across all three planes |
+| **Tour** | Guided walkthrough with spotlight prompts |
 
 While loading, a progress overlay appears and controls are disabled.
 The load runs in a background thread so the UI stays responsive.
@@ -16,8 +18,8 @@ The load runs in a background thread so the UI stays responsive.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  TopBar: Load NIfTI · Load DICOM · [3D ☐] [Preset ▾]    │
-│          Reset · ☀/🌙                                    │
+│  TopBar: Load NIfTI · Load DICOM · ▶ All · [3D ☐] [Preset ▾] │
+│          Reset · ☀/🌙                                      │
 ├──────────────────────────┬───────────────────────────────┤
 │  Axial          N/M      │  Sagittal          N/M        │
 │  [image]                 │  [image]                      │
@@ -121,6 +123,9 @@ Click **▶** on any viewport to animate through slices at 20 fps. Click
 **⏸** to pause. Each plane has independent play/pause — you can play
 multiple planes simultaneously.
 
+**Global play:** use **▶ All / ⏸ All** in the TopBar to play or pause all
+planes together.
+
 ---
 
 ## Annotation mode
@@ -167,3 +172,19 @@ defaults, and clear all zoom/pan states on all three planes.
 Click **☀ / 🌙** in the TopBar to toggle light and dark mode.
 The canvas background stays black in both — medical images are always
 read on a dark background in clinical practice.
+
+---
+
+## Guided tour
+
+Click **Tour** in the TopBar to start a step-by-step guide. The overlay
+shadows the UI, highlights the current control, and explains what it does.
+Use **Next**, **Back**, or **Skip** to navigate.
+
+---
+
+## Start screen
+
+On launch, MLenz shows a dark gradient splash with fMRI-style colors. A
+subtle black overlay keeps the title readable. It disappears after you load
+your first scan.

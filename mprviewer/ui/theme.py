@@ -1,7 +1,7 @@
 """
 mprviewer.ui.theme
 ~~~~~~~~~~~~~~~~~~
-Dark and light palettes for MPRViewer.
+Dark and light palettes for MLenz.
 
 Canvas background is always #000000 in both themes.
 Medical images must always be read on a black background —
@@ -58,7 +58,7 @@ class ThemeManager:
     """Manages light/dark palette selection with QSettings persistence."""
 
     def __init__(self):
-        settings = QSettings("MPRViewer", "MPRViewer")
+        settings = QSettings("MLenz", "MLenz")
         saved = settings.value("theme", None)
         if saved in ("light", "dark"):
             self.current = saved
@@ -78,13 +78,13 @@ class ThemeManager:
 
     def toggle(self) -> None:
         self.current = "dark" if self.current == "light" else "light"
-        QSettings("MPRViewer", "MPRViewer").setValue("theme", self.current)
+        QSettings("MLenz", "MLenz").setValue("theme", self.current)
 
     def is_dark(self) -> bool:
         self._sync()
         return self.current == "dark"
 
     def _sync(self) -> None:
-        saved = QSettings("MPRViewer", "MPRViewer").value("theme", None)
+        saved = QSettings("MLenz", "MLenz").value("theme", None)
         if saved in ("light", "dark"):
             self.current = saved

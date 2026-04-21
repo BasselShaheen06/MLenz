@@ -44,4 +44,4 @@
 
 ## Suggest a feature
 
-Open a [Feature Request](https://github.com/BasselShaheen06/MPR_Viewer/issues/new?template=feature_request.md).
+Open a [Feature Request](https://github.com/BasselShaheen06/MLenz/issues/new?template=feature_request.md).

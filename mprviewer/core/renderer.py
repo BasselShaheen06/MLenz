@@ -168,7 +168,7 @@ class VolumeRenderer:
 
         render_window = vtk.vtkRenderWindow()
         render_window.SetSize(800, 600)
-        render_window.SetWindowName("MPRViewer — Volume Rendering")
+        render_window.SetWindowName("MLenz — Volume Rendering")
         render_window.AddRenderer(self.vtk_renderer)
 
         interactor = vtk.vtkRenderWindowInteractor()

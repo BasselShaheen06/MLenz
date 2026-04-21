@@ -1,4 +1,4 @@
-"""MPRViewer entry point."""
+"""MLenz entry point."""
 import sys
 
 from PyQt5.QtWidgets import QApplication
@@ -7,8 +7,8 @@ from mprviewer.ui.main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("MPRViewer")
-    app.setOrganizationName("MPRViewer")
+    app.setApplicationName("MLenz")
+    app.setOrganizationName("MLenz")
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
