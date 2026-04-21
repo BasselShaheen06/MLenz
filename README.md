@@ -20,39 +20,55 @@ freehand annotation, and PNG export.
 
 ---
 
+## Overview
+
+MLenz is built for fast MRI review and teaching: instant MPR navigation,
+independent window/level per plane, slice cine, and quick annotations.
+The UI stays responsive with background loading, and the 3D panel gives
+an at-a-glance volume view without leaving the main window.
+
+---
+
 ## Demo
 
-> 📹 **Demo coming soon** — record with ScreenToGif:
-> load volume → drag crosshair across all planes → switch colormap →
-> enable 3D panel → annotate a slice → save annotated PNG
+**Demo placeholder**
 
-<!-- Once recorded, replace the line below: -->
-<!-- ![MLenz demo](assets/demo/demo.gif) -->
+```
+┌──────────────────────────────┐
+│        Demo GIF goes here    │
+└──────────────────────────────┘
+```
+
+Planned flow: load volume → drag crosshair → switch colormap → enable 3D →
+annotate a slice → export PNG.
 
 ---
 
 ## Screenshots
 
-> 📸 **Screenshots coming soon** — capture after first successful run
+**Screenshot placeholders**
 
-<!-- Uncomment once screenshots are taken:
+```
+┌──────────────────────────────┐
+│ Main view (MPR planes)       │
+└──────────────────────────────┘
 
-### Three synchronized MPR planes
-![Three MPR planes with draggable crosshairs](assets/demo/screenshot_main.png)
+┌──────────────────────────────┐
+│ Per-viewport controls        │
+└──────────────────────────────┘
 
-### Per-viewport controls
-![Per-viewport play, colormap, W/L, annotation](assets/demo/screenshot_controls.png)
+┌──────────────────────────────┐
+│ Annotation mode              │
+└──────────────────────────────┘
 
-### Annotation mode
-![Freehand annotation on a brain MRI slice](assets/demo/screenshot_annotate.png)
+┌──────────────────────────────┐
+│ 3D volume rendering          │
+└──────────────────────────────┘
 
-### 3D volume rendering
-![Embedded VTK volume rendering panel](assets/demo/screenshot_3d.png)
-
-### Light mode
-![Light mode with teal accent](assets/demo/screenshot_light.png)
-
--->
+┌──────────────────────────────┐
+│ Light mode                   │
+└──────────────────────────────┘
+```
 
 ---
 
