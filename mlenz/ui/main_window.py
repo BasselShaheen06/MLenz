@@ -1,5 +1,5 @@
 """
-mprviewer.ui.main_window
+mlenz.ui.main_window
 ~~~~~~~~~~~~~~~~~~~~~~~~
 MainWindow — top-level Qt window that wires together:
     ControlPanel  (left sidebar)
@@ -39,12 +39,12 @@ try:
 except ImportError:
     _VTK_QT_AVAILABLE = False
 
-from mprviewer.core.loader import VolumeData, guess_loader, load_single_dicom
-from mprviewer.core.renderer import VolumeRenderer
-from mprviewer.ui.controls import TopBar
-from mprviewer.ui.viewport import SliceViewport
-from mprviewer.ui.theme import ThemeManager
-from mprviewer.ui.tour import TourOverlay, TourStep
+from mlenz.core.loader import VolumeData, guess_loader, load_single_dicom
+from mlenz.core.renderer import VolumeRenderer
+from mlenz.ui.controls import TopBar
+from mlenz.ui.viewport import SliceViewport
+from mlenz.ui.theme import ThemeManager
+from mlenz.ui.tour import TourOverlay, TourStep
 
 _theme = ThemeManager()
 

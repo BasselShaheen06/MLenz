@@ -4,7 +4,7 @@
 
 ### Complete rewrite — modular architecture
 
-The original single-file `MPR_Viewer1.py` (710 lines, one class, no separation)
+The original single-file `MLenz1.py` (710 lines, one class, no separation)
 was fully rewritten into a modular package.
 
 **New modules:**

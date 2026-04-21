@@ -3,7 +3,7 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from mprviewer.ui.main_window import MainWindow
+from mlenz.ui.main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)

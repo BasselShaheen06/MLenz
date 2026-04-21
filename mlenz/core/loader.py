@@ -1,5 +1,5 @@
 """
-mprviewer.core.loader
+mlenz.core.loader
 ~~~~~~~~~~~~~~~~~~~~~
 Medical image loading — NIfTI and DICOM series.
 

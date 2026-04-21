@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from mprviewer.core import loader
+from mlenz.core import loader
 
 
 def test_normalise_uniform_volume_returns_zeros():

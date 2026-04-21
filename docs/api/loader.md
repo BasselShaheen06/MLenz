@@ -36,7 +36,7 @@ Auto-detects file type and delegates:
 | anything else | SimpleITK fallback |
 
 ```python
-from mprviewer.core.loader import guess_loader
+from mlenz.core.loader import guess_loader
 
 vol = guess_loader("brain.nii.gz")
 print(vol.data.shape)    # e.g. (182, 218, 182)

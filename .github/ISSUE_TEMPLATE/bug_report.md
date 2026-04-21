@@ -1,6 +1,6 @@
 ---
 name: Bug report
-description: Report a problem or regression in MPRViewer
+description: Report a problem or regression in MLenz
 labels: [bug]
 ---
 
@@ -22,7 +22,7 @@ Describe the issue briefly.
 
 - OS:
 - Python version:
-- MPRViewer version or commit:
+- MLenz version or commit:
 - GPU/driver (if relevant):
 
 ## Additional context

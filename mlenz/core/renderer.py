@@ -1,5 +1,5 @@
 """
-mprviewer.core.renderer
+mlenz.core.renderer
 ~~~~~~~~~~~~~~~~~~~~~~~
 VTK GPU volume rendering pipeline.
 

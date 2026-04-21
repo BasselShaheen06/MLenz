@@ -96,7 +96,7 @@ python main.py
 ## Architecture
 
 ```
-mprviewer/
+mlenz/
 ├── core/
 │   ├── loader.py      # NIfTI + DICOM loading, VolumeData dataclass — no UI
 │   └── renderer.py    # VTK pipeline, transfer function presets — no UI

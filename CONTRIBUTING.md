@@ -1,4 +1,4 @@
-# Contributing to MPRViewer
+# Contributing to MLenz
 
 Thanks for taking the time to contribute.
 

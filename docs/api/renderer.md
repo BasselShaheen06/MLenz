@@ -7,7 +7,7 @@ VTK GPU volume rendering pipeline. No UI or Qt dependencies.
 ## `VolumeRenderer`
 
 ```python
-from mprviewer.core.renderer import VolumeRenderer
+from mlenz.core.renderer import VolumeRenderer
 
 renderer = VolumeRenderer()
 renderer.set_volume(vol.data, spacing=vol.spacing)

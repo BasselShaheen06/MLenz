@@ -1,5 +1,5 @@
 """
-mprviewer.ui.controls
+mlenz.ui.controls
 ~~~~~~~~~~~~~~~~~~~~~
 TopBar controls for the 4-panel grid layout.
 
@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from mprviewer.ui.theme import ThemeManager
+from mlenz.ui.theme import ThemeManager
 
 _theme = ThemeManager()
 

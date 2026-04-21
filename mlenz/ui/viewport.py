@@ -1,5 +1,5 @@
 """
-mprviewer.ui.viewport
+mlenz.ui.viewport
 ~~~~~~~~~~~~~~~~~~~~~
 SliceViewport — pyqtgraph MPR plane widget with embedded controls.
 
@@ -32,7 +32,7 @@ from PyQt5.QtWidgets import (
     QSlider, QPushButton, QVBoxLayout, QWidget,
 )
 
-from mprviewer.ui.theme import ThemeManager
+from mlenz.ui.theme import ThemeManager
 
 _theme = ThemeManager()
 

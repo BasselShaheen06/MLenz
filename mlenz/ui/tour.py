@@ -1,5 +1,5 @@
 """
-mprviewer.ui.tour
+mlenz.ui.tour
 ~~~~~~~~~~~~~~~~~
 Interactive overlay tour with spotlight and prompts.
 """
@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from mprviewer.ui.theme import ThemeManager
+from mlenz.ui.theme import ThemeManager
 
 _theme = ThemeManager()
 
