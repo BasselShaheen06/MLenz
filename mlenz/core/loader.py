@@ -1,5 +1,5 @@
 """
-mprviewer.core.loader
+mlenz.core.loader
 ~~~~~~~~~~~~~~~~~~~~~
 Medical image loading — NIfTI and DICOM series.
 
@@ -14,18 +14,30 @@ Coordinate convention:
 
 from __future__ import annotations
 
-import os
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import SimpleITK as sitk
 
 
+@dataclass(frozen=True)
+class VolumeData:
+    """Normalized volume data with physical spacing metadata."""
+
+    data: np.ndarray
+    spacing: tuple[float, float, float]  # (sx, sy, sz)
+    raw_min: float
+    raw_max: float
+    modality: str | None = None
+    orientation: str | None = None
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
-def load_nifti(path: str | Path) -> np.ndarray:
+def load_nifti(path: str | Path) -> VolumeData:
     """
     Load a NIfTI file (.nii or .nii.gz).
 
@@ -45,14 +57,24 @@ def load_nifti(path: str | Path) -> np.ndarray:
 
     try:
         image = sitk.ReadImage(str(path))
+        image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)      # already (Z, Y, X)
     except Exception as exc:
         raise ValueError(f"Could not read NIfTI file: {path}\n{exc}") from exc
 
-    return _normalise(array)
+    norm, lo, hi = _normalise(array)
+    spacing = _get_spacing(image)
+    return VolumeData(
+        norm,
+        spacing,
+        lo,
+        hi,
+        modality=_get_modality(image),
+        orientation=orientation,
+    )
 
 
-def load_dicom_series(directory: str | Path) -> np.ndarray:
+def load_dicom_series(directory: str | Path) -> VolumeData:
     """
     Load a DICOM series from a directory.
 
@@ -84,16 +106,26 @@ def load_dicom_series(directory: str | Path) -> np.ndarray:
 
     try:
         image = reader.Execute()
+        image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)
     except Exception as exc:
         raise ValueError(
             f"Could not read DICOM series in: {directory}\n{exc}"
         ) from exc
 
-    return _normalise(array)
+    norm, lo, hi = _normalise(array)
+    spacing = _get_spacing(image)
+    return VolumeData(
+        norm,
+        spacing,
+        lo,
+        hi,
+        modality=_get_modality(image),
+        orientation=orientation,
+    )
 
 
-def load_single_dicom(path: str | Path) -> np.ndarray:
+def load_single_dicom(path: str | Path) -> VolumeData:
     """
     Load a single DICOM file.
 
@@ -112,6 +144,7 @@ def load_single_dicom(path: str | Path) -> np.ndarray:
 
     try:
         image = sitk.ReadImage(str(path))
+        image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)
     except Exception as exc:
         raise ValueError(
@@ -121,10 +154,19 @@ def load_single_dicom(path: str | Path) -> np.ndarray:
     if array.ndim == 2:
         array = array[np.newaxis, ...]   # (H, W) → (1, H, W)
 
-    return _normalise(array)
+    norm, lo, hi = _normalise(array)
+    spacing = _get_spacing(image)
+    return VolumeData(
+        norm,
+        spacing,
+        lo,
+        hi,
+        modality=_get_modality(image),
+        orientation=orientation,
+    )
 
 
-def guess_loader(path: str | Path) -> np.ndarray:
+def guess_loader(path: str | Path) -> VolumeData:
     """
     Detect file type and call the appropriate loader.
 
@@ -150,7 +192,17 @@ def guess_loader(path: str | Path) -> np.ndarray:
     # Fall back to SimpleITK and let it decide
     try:
         image = sitk.ReadImage(str(path))
-        return _normalise(sitk.GetArrayFromImage(image))
+        image, orientation = _orient_image(image)
+        norm, lo, hi = _normalise(sitk.GetArrayFromImage(image))
+        spacing = _get_spacing(image)
+        return VolumeData(
+            norm,
+            spacing,
+            lo,
+            hi,
+            modality=_get_modality(image),
+            orientation=orientation,
+        )
     except Exception as exc:
         raise ValueError(
             f"Unsupported file format or unreadable file: {path}\n{exc}"
@@ -161,7 +213,7 @@ def guess_loader(path: str | Path) -> np.ndarray:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _normalise(array: np.ndarray) -> np.ndarray:
+def _normalise(array: np.ndarray) -> tuple[np.ndarray, float, float]:
     """
     Convert any numeric array to float32 normalised to [0, 1].
 
@@ -170,5 +222,30 @@ def _normalise(array: np.ndarray) -> np.ndarray:
     array = array.astype(np.float32)
     lo, hi = float(array.min()), float(array.max())
     if hi > lo:
-        return (array - lo) / (hi - lo)
-    return np.zeros_like(array, dtype=np.float32)
+        return (array - lo) / (hi - lo), lo, hi
+    return np.zeros_like(array, dtype=np.float32), lo, hi
+
+
+def _get_spacing(image: sitk.Image) -> tuple[float, float, float]:
+    sx, sy, sz = image.GetSpacing()
+    return float(sx), float(sy), float(sz)
+
+
+def _get_modality(image: sitk.Image) -> str | None:
+    try:
+        if image.HasMetaDataKey("0008|0060"):
+            return image.GetMetaData("0008|0060")
+    except Exception:
+        return None
+    return None
+
+
+def _orient_image(image: sitk.Image, desired: str = "LPS") -> tuple[sitk.Image, str]:
+    """Reorient image to a standard coordinate system using SimpleITK."""
+    try:
+        orienter = sitk.DICOMOrientImageFilter()
+        orienter.SetDesiredCoordinateOrientation(desired)
+        oriented = orienter.Execute(image)
+        return oriented, desired
+    except Exception:
+        return image, "native"

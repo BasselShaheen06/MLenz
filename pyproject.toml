@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.backends.legacy:build"
 
 [project]
-name = "mprviewer"
+name = "mlenz"
 version = "1.0.0"
 description = "Multi-Planar Reconstruction medical image viewer"
 requires-python = ">=3.10"
@@ -20,8 +20,19 @@ dependencies = [
 ]
 
 [project.scripts]
-mprviewer = "main:main"
+mlenz = "main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["mprviewer*"]
+include = ["mlenz*"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,62 +1,141 @@
 <div align="center">
 
-# MPRViewer
+# MLenz
 
-**Multi-Planar Reconstruction medical image viewer**
+**Multi-Planar Reconstruction MRI viewer**
 
-[![Docs](https://img.shields.io/badge/docs-github.io-teal)](https://basselshaheen06.github.io/MPR_Viewer)
+[![Docs](https://img.shields.io/badge/docs-github.io-teal)](https://basselshaheen06.github.io/MLenz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-teal)](https://www.python.org)
-
-<!-- Replace with actual demo GIF -->
-<!-- ![MPRViewer demo](assets/demo/demo.gif) -->
 
 </div>
 
 ---
 
-MPRViewer loads NIfTI and DICOM volumes and displays all three orthogonal planes (Axial, Coronal, Sagittal) with synchronized crosshair navigation. A fourth panel embeds VTK GPU ray-cast volume rendering directly in the window.
+MLenz loads NIfTI and single-file DICOM scans and displays all three orthogonal
+planes — Axial, Coronal, Sagittal — with synchronized draggable crosshairs.
+A fourth panel embeds VTK GPU ray-cast volume rendering. Each viewport has
+its own embedded controls: play/pause cine, colormap, Window/Level sliders,
+freehand annotation, and PNG export.
+
+---
+
+## Overview
+
+MLenz is built for fast MRI review and teaching: instant MPR navigation,
+independent window/level per plane, slice cine, and quick annotations.
+The UI stays responsive with background loading, and the 3D panel gives
+an at-a-glance volume view without leaving the main window.
+
+---
+
+## Demo
+
+**Demo placeholder**
+
+```
+┌──────────────────────────────┐
+│        Demo GIF goes here    │
+└──────────────────────────────┘
+```
+
+Planned flow: load volume → drag crosshair → switch colormap → enable 3D →
+annotate a slice → export PNG.
+
+---
+
+## Screenshots
+
+**Screenshot placeholders**
+
+```
+┌──────────────────────────────┐
+│ Main view (MPR planes)       │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│ Per-viewport controls        │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│ Annotation mode              │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│ 3D volume rendering          │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│ Light mode                   │
+└──────────────────────────────┘
+```
+
+---
 
 ## Features
 
-| | |
+| Feature | Details |
 |---|---|
-| **MPR planes** | Axial, Coronal, Sagittal — synchronized crosshair |
-| **File formats** | NIfTI (`.nii`, `.nii.gz`), DICOM series, single DICOM |
-| **Window / Level** | Per-plane W/L controls (radiological standard) |
-| **3D rendering** | VTK GPU ray-cast, embedded as 4th viewport |
-| **Transfer functions** | MRI default, Bone, Angio, PET presets |
-| **Cine mode** | 20 fps animated slice playback |
-| **Theme** | Dark (clinical default) + light mode |
+| **MPR planes** | Axial · Coronal · Sagittal — synchronized |
+| **Crosshairs** | Draggable `InfiniteLine` — drag any line to update all planes |
+| **Crosshair circle** | Hollow red circle marks the intersection point |
+| **File formats** | NIfTI `.nii`/`.nii.gz` · single DICOM `.dcm` |
+| **Per-viewport controls** | ▶ Play/Pause · colormap · W slider · L slider — embedded in each plane |
+| **Global cine** | ▶ All / ⏸ All — play every plane together |
+| **Annotation mode** | Freehand drawing, clear, export as PNG |
+| **3D rendering** | VTK GPU ray-cast embedded as 4th viewport |
+| **Transfer functions** | MRI default · Bone · Angio · PET |
+| **Theme** | Dark (clinical default, follows system) + light mode toggle |
+| **Background loading** | `QThread` — UI stays responsive on large volumes |
+| **Slice cache** | LRU cache + neighbor prefetch for fast navigation |
+| **Start screen** | fMRI-style gradient splash with dark overlay |
+| **Guided tour** | Step-by-step overlay with spotlight prompts |
+
+---
 
 ## Quick start
 
 ```bash
-git clone https://github.com/BasselShaheen06/MPR_Viewer.git
-cd MPR_Viewer
+git clone https://github.com/BasselShaheen06/MLenz.git
+cd MLenz
 python -m venv venv
 venv\Scripts\activate    # Windows
+source venv/bin/activate # macOS / Linux
 pip install -r requirements.txt
 python main.py
 ```
 
-→ **[Full documentation](https://basselshaheen06.github.io/MPR_Viewer)**
+→ **[Full documentation](https://basselshaheen06.github.io/MLenz)**
+
+---
 
 ## Architecture
 
 ```
-mprviewer/
+mlenz/
 ├── core/
-│   ├── loader.py      # NIfTI + DICOM loading — no UI
-│   └── renderer.py    # VTK pipeline — no UI
+│   ├── loader.py      # NIfTI + DICOM loading, VolumeData dataclass — no UI
+│   └── renderer.py    # VTK pipeline, transfer function presets — no UI
 └── ui/
-    ├── viewport.py    # SliceViewport widget (reusable, ×3)
-    ├── controls.py    # Sidebar panel
-    ├── main_window.py # Wiring + crosshair sync
-    └── theme.py       # Dark / light palettes
+    ├── viewport.py    # SliceViewport — pyqtgraph canvas, crosshairs, annotation
+    ├── controls.py    # TopBar (global actions)
+    ├── main_window.py # Wiring, crosshair sync, cine timers, background load
+    └── theme.py       # Dark / light palettes, ThemeManager
 ```
 
-`core/` modules are pure functions — no Qt, no matplotlib. They can be used independently in scripts or notebooks.
+`core/` modules have no UI dependencies — they work in scripts and notebooks.
+
+---
+
+## Development
+
+```bash
+pip install -r requirements-dev.txt
+ruff check .
+pytest
+```
+
+---
 
 ## License
 
