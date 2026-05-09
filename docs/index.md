@@ -27,12 +27,6 @@
 ### Entry window
 ![Entry window](assets/screenshots/Entry%20Window.png)
 
-### Main view
-![Main view](assets/screenshots/Screenshot%202026-04-20%20222749.png)
-
-### 2x2 grid with 3D panel
-![2x2 grid with 3D panel](assets/screenshots/Screenshot%202026-04-21%20052912.png)
-
 ### Different color mapping
 ![Different color mapping](assets/screenshots/Different%20Color%20Mapping.png)
 
