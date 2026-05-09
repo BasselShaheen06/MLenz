@@ -6,35 +6,50 @@
 
 ## Demo
 
-> 📹 **Demo coming soon**
->
-> Record with ScreenToGif: load a NIfTI brain scan → drag crosshair across
-> all three planes → switch colormap on one plane → enable 3D viewport →
-> draw an annotation → save annotated PNG
+### MLenz demo 2.0
 
-<!-- ![MLenz demo](../assets/demo/demo.gif) -->
+<video controls width="100%">
+    <source src="assets/demo/MLenzDemo%202.0.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+
+### MLenz demo 1.0
+
+<video controls width="100%">
+    <source src="assets/demo/demo%201.0.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
 
 ---
 
 ## Screenshots
 
-> 📸 **Screenshots coming soon** — take after first successful run
+### Entry window
+![Entry window](assets/screenshots/Entry%20Window.png)
 
-<!-- Uncomment once captured:
+### Main view
+![Main view](assets/screenshots/Screenshot%202026-04-20%20222749.png)
 
-### Main view — three synchronized planes
-![Three MPR planes](../assets/demo/screenshot_main.png)
+### 2x2 grid with 3D panel
+![2x2 grid with 3D panel](assets/screenshots/Screenshot%202026-04-21%20052912.png)
 
-### Annotation mode
-![Freehand annotation on a brain slice](../assets/demo/screenshot_annotate.png)
+### Different color mapping
+![Different color mapping](assets/screenshots/Different%20Color%20Mapping.png)
 
-### 3D volume rendering
-![Embedded VTK volume panel](../assets/demo/screenshot_3d.png)
+### Window/Level controls
+![Window/Level](assets/screenshots/Window-Level.png)
+
+### Draw annotations
+![Draw annotations](assets/screenshots/Draw%20Annotations.png)
+
+### Annotations fade with slices
+![Annotations fade with slices](assets/screenshots/Annotations%20fade%20with%20slices.png)
+
+### 3D construction using VTK
+![3D construction using VTK](assets/screenshots/3D%20Construction%20using%20VTK.png)
 
 ### Light mode
-![Light mode](../assets/demo/screenshot_light.png)
-
--->
+![Light mode](assets/screenshots/LightMode.png)
 
 ---
 

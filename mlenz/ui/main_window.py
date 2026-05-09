@@ -657,12 +657,28 @@ class MainWindow(QMainWindow):
         z, y, x = self._volume.shape
         self._crosshair = [x // 2, y // 2, z // 2]
         self._slice_cache.clear()
+
+        self._on_global_play_toggled(False)
+        self._top_bar.set_play_all(False)
+
         self._vp[AXIAL].set_slice_index(self._crosshair[2])
         self._vp[CORONAL].set_slice_index(self._crosshair[1])
         self._vp[SAGITTAL].set_slice_index(self._crosshair[0])
         for vp in self._vp:
             vp.reset_zoom()
+            vp.reset_wl()
+            vp.set_colormap("gray")
+            vp.reset_annotations()
+
         self._wl = [(0.5, 1.0), (0.5, 1.0), (0.5, 1.0)]
+        self._colormaps = ["gray", "gray", "gray"]
+
+        self._top_bar.set_vr_preset("mri_default")
+        self._renderer.set_preset("mri_default")
+        self._renderer.reset_camera()
+        if self._vtk_widget is not None:
+            self._vtk_widget.GetRenderWindow().Render()
+
         self._prefetch_neighbors()
         self._update_all()
         self._status.showMessage("View reset to default")

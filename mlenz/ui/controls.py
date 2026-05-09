@@ -123,6 +123,17 @@ class TopBar(QWidget):
         ]:
             widget.setEnabled(enabled)
 
+    def set_play_all(self, playing: bool) -> None:
+        self._play_all_btn.blockSignals(True)
+        self._play_all_btn.setChecked(playing)
+        self._play_all_btn.blockSignals(False)
+        self._play_all_btn.setText("⏸ All" if playing else "▶ All")
+
+    def set_vr_preset(self, name: str) -> None:
+        self._vr_preset_combo.blockSignals(True)
+        self._vr_preset_combo.setCurrentText(name)
+        self._vr_preset_combo.blockSignals(False)
+
     def apply_theme(self) -> None:
         self._update_theme_icon()
         T = _theme.palette()

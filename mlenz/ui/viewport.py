@@ -273,6 +273,16 @@ class SliceViewport(QWidget):
             sl.setValue(val)
             sl.blockSignals(False)
 
+    def set_colormap(self, name: str) -> None:
+        self._cmap_combo.blockSignals(True)
+        self._cmap_combo.setCurrentText(name)
+        self._cmap_combo.blockSignals(False)
+
+    def reset_annotations(self) -> None:
+        if self._annot_btn.isChecked():
+            self._annot_btn.setChecked(False)
+        self.clear_annotations()
+
     def display(
         self,
         slice_data: np.ndarray,
