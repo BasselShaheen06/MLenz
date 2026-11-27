@@ -82,6 +82,16 @@ def test_sample_ct_round_trips_hounsfield_units(tmp_path):
     assert float(hu.max()) > 900.0
 
 
+def test_sample_ct_uses_slice_thickness_for_through_plane_spacing(tmp_path):
+    """GDCM reports 1.0 mm for multi-frame DICOM; the header says otherwise."""
+    path = write_sample_ct(tmp_path / "ct.dcm", size=64, slices=12)
+
+    volume = load_single_dicom(path)
+
+    assert volume.spacing[2] == pytest.approx(3.0)
+    assert volume.physical_extent[0] == pytest.approx(12 * 3.0)
+
+
 def test_brain_preset_separates_the_lesion_from_parenchyma(tmp_path):
     """The point of the phantom: a window that shows the lesion."""
     path = write_sample_ct(tmp_path / "ct.dcm", size=96, slices=24)

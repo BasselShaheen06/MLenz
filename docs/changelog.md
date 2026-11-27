@@ -22,7 +22,11 @@
 
 ### Fixed
 
-Nothing yet.
+- **Multi-frame DICOM lost its through-plane spacing** — GDCM reports 1.0 mm
+  between frames even when `SpacingBetweenSlices`/`SliceThickness` says
+  otherwise, so coronal and sagittal reconstructions were squashed. The loader
+  now fills the real value in before reorientation, so it is permuted with the
+  axes.
 
 ## [1.1.0] — 2026-11-27
 

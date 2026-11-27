@@ -83,6 +83,7 @@ def load_nifti(path: str | Path) -> VolumeData:
         # Capture DICOM metadata first: DICOMOrientImageFilter drops every
         # metadata key, so reading tags after reorientation returns nothing.
         meta = _get_meta(image)
+        image = _apply_slice_spacing(image, meta)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)      # already (Z, Y, X)
     except Exception as exc:
@@ -135,6 +136,7 @@ def load_dicom_series(directory: str | Path) -> VolumeData:
     try:
         image = reader.Execute()
         meta = _get_meta(image)
+        image = _apply_slice_spacing(image, meta)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)
     except Exception as exc:
@@ -176,6 +178,7 @@ def load_single_dicom(path: str | Path) -> VolumeData:
     try:
         image = sitk.ReadImage(str(path))
         meta = _get_meta(image)
+        image = _apply_slice_spacing(image, meta)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)
     except Exception as exc:
@@ -227,6 +230,7 @@ def guess_loader(path: str | Path) -> VolumeData:
     try:
         image = sitk.ReadImage(str(path))
         meta = _get_meta(image)
+        image = _apply_slice_spacing(image, meta)
         image, orientation = _orient_image(image)
         norm, lo, hi = _normalise(sitk.GetArrayFromImage(image))
         spacing = _get_spacing(image)
@@ -288,6 +292,39 @@ def _has_rescale(meta: dict[str, str]) -> bool:
     (Hounsfield units for CT). Applying them a second time would be wrong.
     """
     return "0028|1053" in meta or "0028|1052" in meta
+
+
+def _apply_slice_spacing(image: sitk.Image, meta: dict[str, str]) -> sitk.Image:
+    """Fill in through-plane spacing when the reader leaves it at 1.0 mm.
+
+    GDCM reports 1.0 mm between frames of a multi-frame DICOM even when
+    ``SpacingBetweenSlices`` or ``SliceThickness`` says otherwise, which
+    squashes coronal and sagittal reconstructions. The value is set *before*
+    reorientation so the orienter permutes it along with the axes.
+    """
+    if image.GetSize()[2] <= 1:
+        return image
+
+    sx, sy, sz = image.GetSpacing()
+    if abs(sz - 1.0) > 1e-6:
+        return image  # the reader already knew the real spacing
+
+    for key in ("0018|0088", "0028|0018"):  # SpacingBetweenSlices, SliceThickness
+        value = _meta_float(meta, key)
+        if value is not None and value > 0:
+            image.SetSpacing((sx, sy, float(value)))
+            return image
+    return image
+
+
+def _meta_float(meta: dict[str, str], key: str) -> float | None:
+    raw = meta.get(key)
+    if raw is None:
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
 
 
 def _orient_image(image: sitk.Image, desired: str = "LPS") -> tuple[sitk.Image, str]:

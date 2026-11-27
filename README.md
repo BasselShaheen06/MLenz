@@ -171,9 +171,12 @@ print(volume.physical_extent)   # volume size in millimetres
 
 Written down rather than hidden, because they decide what the tool is for today:
 
-- **Single-file DICOM only.** No folder/series import and no multi-frame DICOM.
-- **Through-plane spacing is assumed.** For a single DICOM file, `SliceThickness`
-  is ignored and z-spacing is taken as 1 mm.
+- **Single-file DICOM only.** No folder/series import in the UI and no
+  multi-frame handling beyond what SimpleITK provides; a lone 2-D `.dcm` gives
+  one axial slice with degenerate coronal and sagittal planes.
+- **Through-plane spacing comes from the header.** `SpacingBetweenSlices` or
+  `SliceThickness` is used when the reader leaves it at 1 mm; if a file carries
+  neither, coronal and sagittal views are stretched.
 - **Window/level works on normalized intensities.** CT volumes can be read in
   Hounsfield units and windowed with clinical presets, but the sliders still
   operate on the normalised scale, so the readout is not in HU yet.
