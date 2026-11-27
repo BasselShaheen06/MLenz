@@ -22,10 +22,15 @@
 - [x] Anisotropic-spacing aspect correction fixed (was inverted and crashed on pyqtgraph 0.14)
 - [x] Installable package — `pip install .` provides the `mlenz` command and `python -m mlenz`
 - [x] Test suite (loader + geometry) running in CI on `main`
+- [x] DICOM metadata preserved across reorientation (`VolumeData.meta`)
+- [x] Axis-safe spacing helpers — `spacing_zyx`, `physical_extent`
+- [x] Runtime dependencies match the imports (`pyqtgraph` was undeclared)
 - [x] Dark / light mode with system preference detection
+- [x] Documentation published from the portfolio site, source kept in `docs/`
 
 ## Planned — short term
 
+- [ ] Hounsfield-unit conversion for CT, with Brain · Bone · Lung · Soft-tissue presets
 - [ ] Pixel value readout on hover
 - [ ] Keyboard shortcuts (L=load, R=reset, P=play, 1/2/3=focus plane)
 - [ ] DICOM metadata panel (acquisition parameters, anonymised)

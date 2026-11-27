@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [1.1.0] — 2026-11-27
+
 ### Fixed
 
 - **Installed console script was broken** — the `mlenz` entry point pointed at
