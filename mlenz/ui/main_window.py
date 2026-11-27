@@ -378,6 +378,11 @@ class MainWindow(QMainWindow):
         self._volume = volume.data
         self._volume_data = volume
         self._spacing = volume.spacing
+        # A window chosen for the previous volume is meaningless for this one:
+        # a Bone preset left over from a CT would blow out an MRI completely.
+        self._wl = [(0.5, 1.0)] * len(self._vp)
+        for vp in self._vp:
+            vp.reset_wl()
         self._on_volume_loaded(name)
         self._setup_presets()
         self._hide_start_screen()
