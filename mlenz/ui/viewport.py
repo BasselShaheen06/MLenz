@@ -21,17 +21,23 @@ Signals:
 from __future__ import annotations
 
 import math
+
 import numpy as np
 import pyqtgraph as pg
+from PyQt5.QtCore import QPointF, Qt, pyqtSignal
+from PyQt5.QtGui import QCursor, QTransform
+from PyQt5.QtWidgets import (
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSlider,
+    QVBoxLayout,
+    QWidget,
+)
 from pyqtgraph import ImageView, InfiniteLine, ScatterPlotItem
 
-from PyQt5.QtCore import Qt, QPointF, pyqtSignal
-from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import (
-    QComboBox, QHBoxLayout, QLabel,
-    QSlider, QPushButton, QVBoxLayout, QWidget,
-)
-
+from mlenz.core.geometry import aspect_scale
 from mlenz.ui.theme import ThemeManager
 
 _theme = ThemeManager()
@@ -93,7 +99,8 @@ class SliceViewport(QWidget):
         lay.setContentsMargins(8, 0, 8, 0)
         self._title_lbl = QLabel(self._title)
         self._title_lbl.setStyleSheet(
-            f"color:{T['accent']}; font-size:11px; font-weight:700; background:transparent;"
+            f"color:{T['accent']}; font-size:11px; font-weight:700;"
+            " background:transparent;"
         )
         self._slice_lbl = QLabel("—")
         self._slice_lbl.setStyleSheet(
@@ -307,10 +314,20 @@ class SliceViewport(QWidget):
                 pg.colormap.get("gray", source="matplotlib")
             )
         self.set_crosshair(crosshair_x, crosshair_y)
-        sx, sy = pixel_spacing
-        if sx > 0 and sy > 0 and abs(sx - sy) > 1e-4:
-            self._pg_view.getImageItem().resetTransform()
-            self._pg_view.getImageItem().scale(sy / sx, 1.0)
+        self._apply_aspect(pixel_spacing)
+
+    def _apply_aspect(self, pixel_spacing: tuple[float, float]) -> None:
+        """Scale horizontally so voxels keep their physical proportions.
+
+        pyqtgraph 0.14 no longer exposes ``ImageItem.scale(sx, sy)``, so the
+        transform is set explicitly.
+        """
+        col_spacing, row_spacing = pixel_spacing
+        item = self._pg_view.getImageItem()
+        item.resetTransform()
+        scale = aspect_scale(col_spacing, row_spacing)
+        if abs(scale - 1.0) > 1e-4:
+            item.setTransform(QTransform().scale(scale, 1.0))
 
     def reset_zoom(self) -> None:
         self._pg_view.autoRange()
@@ -338,7 +355,8 @@ class SliceViewport(QWidget):
             f"background:{T['panel']}; border-bottom:1px solid {T['border']};"
         )
         self._title_lbl.setStyleSheet(
-            f"color:{T['accent']}; font-size:11px; font-weight:700; background:transparent;"
+            f"color:{T['accent']}; font-size:11px; font-weight:700;"
+            " background:transparent;"
         )
         self._slice_lbl.setStyleSheet(
             f"color:{T['text_sec']}; font-size:10px; background:transparent;"
