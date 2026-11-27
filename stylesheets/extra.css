@@ -1,0 +1,7 @@
+:root { --md-typeset-font-size: 0.85rem; }
+.md-typeset { font-size: 1rem; line-height: 1.75; }
+.md-typeset h1 { font-size: 2rem; font-weight: 700; }
+.md-typeset h2 { font-size: 1.4rem; font-weight: 600; margin-top: 2rem; }
+.md-typeset h3 { font-size: 1.1rem; font-weight: 600; }
+.md-footer { background-color: #1A2B2B; }
+.md-footer-meta { background-color: #0F1E1E; }
