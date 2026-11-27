@@ -47,6 +47,8 @@ pg.setConfigOptions(imageAxisOrder="row-major", antialias=True)
 COLORMAPS = ["gray", "viridis", "plasma", "inferno",
              "magma", "cividis", "hot", "bone", "jet"]
 
+PRESET_PLACEHOLDER = "Preset"
+
 CROSSHAIR_COLOR = "#EF5350"
 CROSSHAIR_HOVER = "#FF8A80"
 ANNOT_COLOR     = "#FFD600"
@@ -62,6 +64,7 @@ class SliceViewport(QWidget):
     play_toggled    = pyqtSignal(int, bool)
     cmap_changed    = pyqtSignal(int, str)
     wl_changed      = pyqtSignal(int, float, float)
+    preset_selected = pyqtSignal(int, str)
 
     def __init__(self, title: str, plane_index: int, parent=None):
         super().__init__(parent)
@@ -70,6 +73,7 @@ class SliceViewport(QWidget):
         self._blocking    = False
         self._playing     = False
         self._annotating  = False
+        self._applying_window = False
         self._annot_items: list[pg.PlotDataItem] = []
         self._live_item:   pg.PlotDataItem | None = None
         self._current_stroke: list[QPointF]       = []
@@ -215,9 +219,20 @@ class SliceViewport(QWidget):
 
         lay.addLayout(r1)
 
-        # Row 2: ✏ Annotate  🗑 Clear  💾 Save  [status]
+        # Row 2: [preset]  ✏ Annotate  🗑 Clear  💾 Save  [status]
         r2 = QHBoxLayout()
         r2.setSpacing(4)
+
+        self._preset_combo = QComboBox()
+        self._preset_combo.setFixedHeight(22)
+        self._preset_combo.setStyleSheet(_combo_style(T))
+        self._preset_combo.setToolTip(
+            "Clinical window preset in Hounsfield units (CT only)"
+        )
+        self._preset_combo.addItem(PRESET_PLACEHOLDER)
+        self._preset_combo.setVisible(False)
+        self._preset_combo.currentTextChanged.connect(self._on_preset_changed)
+        r2.addWidget(self._preset_combo)
 
         self._annot_btn = _small_btn("✏ Annotate", T)
         self._annot_btn.setCheckable(True)
@@ -279,6 +294,37 @@ class SliceViewport(QWidget):
             sl.blockSignals(True)
             sl.setValue(val)
             sl.blockSignals(False)
+        self.clear_preset()
+
+    def set_presets(self, names: list[str]) -> None:
+        """Fill the preset selector, or hide it when there is nothing to offer."""
+        self._preset_combo.blockSignals(True)
+        self._preset_combo.clear()
+        self._preset_combo.addItem(PRESET_PLACEHOLDER)
+        self._preset_combo.addItems(names)
+        self._preset_combo.setCurrentIndex(0)
+        self._preset_combo.blockSignals(False)
+        self._preset_combo.setVisible(bool(names))
+
+    def clear_preset(self) -> None:
+        """Return the selector to its placeholder without emitting a signal."""
+        self._preset_combo.blockSignals(True)
+        self._preset_combo.setCurrentIndex(0)
+        self._preset_combo.blockSignals(False)
+
+    def apply_window(self, center: float, width: float) -> None:
+        """Drive both sliders from normalised values and emit a single update."""
+        self._applying_window = True
+        try:
+            self._w_slider.blockSignals(True)
+            self._l_slider.blockSignals(True)
+            self._w_slider.setValue(int(round(width * 100)))
+            self._l_slider.setValue(int(round(center * 100)))
+            self._w_slider.blockSignals(False)
+            self._l_slider.blockSignals(False)
+            self._emit_wl()
+        finally:
+            self._applying_window = False
 
     def set_colormap(self, name: str) -> None:
         self._cmap_combo.blockSignals(True)
@@ -506,8 +552,15 @@ class SliceViewport(QWidget):
         self.play_toggled.emit(self._plane_index, self._playing)
 
     def _emit_wl(self) -> None:
+        if not self._applying_window:
+            # A manual slider move means the preset no longer describes the view.
+            self.clear_preset()
         center, width = self.window_level()
         self.wl_changed.emit(self._plane_index, center, width)
+
+    def _on_preset_changed(self, name: str) -> None:
+        if name and name != PRESET_PLACEHOLDER:
+            self.preset_selected.emit(self._plane_index, name)
 
     def _refresh_annotations_visibility(self) -> None:
         for slice_idx, items in self._slice_annots.items():

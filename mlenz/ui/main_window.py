@@ -40,6 +40,13 @@ except ImportError:
 
 from mlenz.core.loader import VolumeData, guess_loader, load_single_dicom
 from mlenz.core.renderer import VolumeRenderer
+from mlenz.core.windowing import (
+    PRESETS,
+    get_preset,
+    has_rescale,
+    is_ct,
+    to_normalised_window,
+)
 from mlenz.ui.controls import TopBar
 from mlenz.ui.theme import ThemeManager
 from mlenz.ui.tour import TourOverlay, TourStep
@@ -62,6 +69,7 @@ class MainWindow(QMainWindow):
 
         # Volume state
         self._volume:     np.ndarray | None = None
+        self._volume_data: VolumeData | None = None
         self._spacing: tuple[float, float, float] = (1.0, 1.0, 1.0)
         self._crosshair = [0, 0, 0]   # [x, y, z] in voxel coordinates
         self._wl: list[tuple[float, float]] = [
@@ -287,6 +295,7 @@ class MainWindow(QMainWindow):
             vp.play_toggled.connect(self._on_play_toggled)
             vp.cmap_changed.connect(self._on_colormap_changed)
             vp.wl_changed.connect(self._on_wl_changed)
+            vp.preset_selected.connect(self._on_preset_selected)
 
     # =========================================================================
     # Load
@@ -367,8 +376,10 @@ class MainWindow(QMainWindow):
 
     def _on_load_finished(self, volume: VolumeData, name: str):
         self._volume = volume.data
+        self._volume_data = volume
         self._spacing = volume.spacing
         self._on_volume_loaded(name)
+        self._setup_presets()
         self._hide_start_screen()
         self._set_loading_state(False, None)
 
@@ -551,6 +562,32 @@ class MainWindow(QMainWindow):
     def _on_wl_changed(self, plane: int, center: float, width: float):
         self._wl[plane] = (center, width)
         self._schedule_update()
+
+    def _setup_presets(self) -> None:
+        """Offer HU presets only where they mean something — on CT."""
+        volume = self._volume_data
+        usable = volume is not None and (is_ct(volume) or has_rescale(volume))
+        names = [p.name for p in PRESETS] if usable else []
+        for vp in self._vp:
+            vp.set_presets(names)
+
+    def _on_preset_selected(self, plane: int, name: str):
+        volume = self._volume_data
+        if volume is None:
+            return
+        try:
+            preset = get_preset(name)
+            center, width = to_normalised_window(
+                volume, preset.level, preset.width
+            )
+        except (KeyError, ValueError) as exc:
+            self._status.showMessage(str(exc))
+            return
+        self._vp[plane].apply_window(center, width)
+        self._status.showMessage(
+            f"{preset.name} window — level {preset.level:g} HU, "
+            f"width {preset.width:g} HU"
+        )
 
     def _on_play_toggled(self, plane: int, playing: bool):
         timer = self._cine_timers[plane]
