@@ -80,10 +80,9 @@ but functional.
 
 ---
 
-## Building the docs locally
+## Editing the docs
 
-```bash
-pip install mkdocs-material
-mkdocs serve
-# open http://127.0.0.1:8000
-```
+The pages in `docs/` are plain Markdown and are published on the portfolio site.
+There is no static-site generator in this repository — edit the Markdown here,
+then copy the page to the portfolio. See [`README.md`](README.md) in this folder
+for the publishing layout and the conventions to keep the pages portable.
