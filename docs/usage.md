@@ -97,9 +97,10 @@ $$\text{pixel} = \text{clip}\!\left(\frac{I - (L - W/2)}{W},\ 0,\ 1\right)$$
 
 Each plane has independent W/L — standard PACS behaviour.
 
-!!! info "Why not Brightness/Contrast?"
-    Window and Level are the clinical standard terms. They directly define
-    which intensity range maps to the full display scale.
+> **Why not Brightness/Contrast?**
+>
+> Window and Level are the clinical standard terms. They directly define
+> which intensity range maps to the full display scale.
 
 ---
 

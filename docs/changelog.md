@@ -17,10 +17,18 @@
   ratio was inverted. Replaced with an explicit `QTransform` and moved the math
   into `core/geometry.py`, which is unit-tested. Square-pixel volumes were
   unaffected, so the bug stayed hidden on isotropic demo data.
+- **`pip install .` produced a broken install** — `pyqtgraph` was imported by
+  the UI but never declared, and the test-only `nibabel`/`pydicom` were listed
+  as runtime dependencies. Runtime requirements now match the imports, and the
+  test dependencies live in the `dev` extra.
 
 ### Added
 
-- `tests/test_loader.py` — 15 tests over the public loaders, using synthetic
+- `VolumeData.meta` — every metadata key, read before reorientation.
+  `VolumeData.spacing_zyx` and `VolumeData.physical_extent` give millimetre
+  values in the same axis order as `data` (`Z, Y, X`), removing the silent
+  axis-order mix-up in volume maths.
+- `tests/test_loader.py` — 19 tests over the public loaders, using synthetic
   NIfTI and DICOM files (no patient data).
 - `tests/test_geometry.py` — aspect-ratio tests.
 - `mlenz/core/geometry.py` — pure, Qt-free geometry helpers.
@@ -28,6 +36,21 @@
   regular packages rather than implicit namespace packages.
 - CI now runs on `main` (it was watching `master`, so it never ran), installs
   the package, and verifies the console-script entry point.
+- `docs/assets/demo/hero.gif` — a 12-second capture used at the top of the
+  README, generated from the existing demo recording.
+- `docs/README.md` — explains that `docs/` is plain Markdown published on the
+  portfolio site, with no static-site generator in this repository.
+
+### Changed
+
+- **Documentation moved to the portfolio site.** MkDocs is gone: `mkdocs.yml`,
+  `docs/stylesheets/` and the GitHub Pages workflow were removed. The pages
+  stay in `docs/` as plain Markdown — the single source of truth — with the
+  API reference kept next to the code.
+- README rewritten around a demo GIF, a screenshot grid and an explicit
+  limitations section, instead of placeholder boxes.
+- The MkDocs-only `!!! info` admonition in `docs/usage.md` became a blockquote
+  so the page renders anywhere.
 
 ## [1.0.0] — 2026
 

@@ -2,73 +2,55 @@
 
 # MLenz
 
-**Multi-Planar Reconstruction MRI viewer**
+**Multi-planar reconstruction viewer for MRI and CT**
 
-[![Docs](https://img.shields.io/badge/docs-github.io-teal)](https://basselshaheen06.github.io/MLenz)
+[![Portfolio](https://img.shields.io/badge/docs-portfolio-teal)](https://basselshaheen06.github.io)
+[![CI](https://github.com/BasselShaheen06/MLenz/actions/workflows/ci.yml/badge.svg)](https://github.com/BasselShaheen06/MLenz/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-teal)](https://www.python.org)
 
 </div>
 
----
+![MLenz showing axial, sagittal and coronal planes with a freehand annotation and a 3D volume](docs/assets/demo/hero.gif)
 
-MLenz loads NIfTI and single-file DICOM scans and displays all three orthogonal
-planes — Axial, Coronal, Sagittal — with synchronized draggable crosshairs.
-A fourth panel embeds VTK GPU ray-cast volume rendering. Each viewport has
-its own embedded controls: play/pause cine, colormap, Window/Level sliders,
-freehand annotation, and PNG export.
+MLenz opens a NIfTI or DICOM volume and shows it as three synchronized planes —
+Axial, Coronal, Sagittal — with draggable crosshairs and a fourth panel that
+ray-casts the volume in 3D. Every plane carries its own cine controls, colormap,
+window/level sliders, freehand annotation and PNG export.
 
----
-
-## Overview
-
-MLenz is built for fast MRI review and teaching: instant MPR navigation,
-independent window/level per plane, slice cine, and quick annotations.
-The UI stays responsive with background loading, and the 3D panel gives
-an at-a-glance volume view without leaving the main window.
+Built for fast review and teaching: the volume loads in the background, slices
+are cached with neighbour prefetch, and the 3D view sits next to the slices
+instead of in a separate window.
 
 ---
 
-## Demo
+## What it does
 
-**Demo placeholder**
-
-```
-┌──────────────────────────────┐
-│        Demo GIF goes here    │
-└──────────────────────────────┘
-```
-
-Planned flow: load volume → drag crosshair → switch colormap → enable 3D →
-annotate a slice → export PNG.
+- **Navigate in three planes at once.** Drag any crosshair and the other two
+  follow, so you always know where you are in the volume.
+- **Adjust what you see, per plane.** Each viewport has independent
+  window/level, colormap and cine — standard PACS behaviour.
+- **Look inside without leaving.** A VTK GPU ray-cast panel renders the whole
+  volume with switchable transfer functions.
 
 ---
 
 ## Screenshots
 
-**Screenshot placeholders**
-
-```
-┌──────────────────────────────┐
-│ Main view (MPR planes)       │
-└──────────────────────────────┘
-
-┌──────────────────────────────┐
-│ Per-viewport controls        │
-└──────────────────────────────┘
-
-┌──────────────────────────────┐
-│ Annotation mode              │
-└──────────────────────────────┘
-
-┌──────────────────────────────┐
-│ 3D volume rendering          │
-└──────────────────────────────┘
-
-┌──────────────────────────────┐
-│ Light mode                   │
-└──────────────────────────────┘
-```
+<table>
+  <tr>
+    <td width="50%"><img src="docs/assets/screenshots/Entry%20Window.png" alt="Start screen with recent files"><br><sub><b>Start screen</b> — recent scans, one click away</sub></td>
+    <td width="50%"><img src="docs/assets/screenshots/3D%20Construction%20using%20VTK.png" alt="3D volume rendering"><br><sub><b>3D volume</b> — VTK ray-cast beside the slices</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/screenshots/Different%20Color%20Mapping.png" alt="Colormaps per plane"><br><sub><b>Colormaps</b> — one per plane, applied live</sub></td>
+    <td width="50%"><img src="docs/assets/screenshots/Draw%20Annotations.png" alt="Freehand annotation"><br><sub><b>Annotations</b> — freehand drawing, exported as PNG</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/screenshots/Window-Level.png" alt="Window and level sliders"><br><sub><b>Window / Level</b> — independent contrast and brightness per plane</sub></td>
+    <td width="50%"><img src="docs/assets/screenshots/LightMode.png" alt="Light theme"><br><sub><b>Light mode</b> — dark clinical default, light on request</sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -78,7 +60,6 @@ annotate a slice → export PNG.
 |---|---|
 | **MPR planes** | Axial · Coronal · Sagittal — synchronized |
 | **Crosshairs** | Draggable `InfiniteLine` — drag any line to update all planes |
-| **Crosshair circle** | Hollow red circle marks the intersection point |
 | **File formats** | NIfTI `.nii`/`.nii.gz` · single DICOM `.dcm` |
 | **Per-viewport controls** | ▶ Play/Pause · colormap · W slider · L slider — embedded in each plane |
 | **Global cine** | ▶ All / ⏸ All — play every plane together |
@@ -87,25 +68,48 @@ annotate a slice → export PNG.
 | **Transfer functions** | MRI default · Bone · Angio · PET |
 | **Theme** | Dark (clinical default, follows system) + light mode toggle |
 | **Background loading** | `QThread` — UI stays responsive on large volumes |
-| **Slice cache** | LRU cache + neighbor prefetch for fast navigation |
-| **Start screen** | fMRI-style gradient splash with dark overlay |
+| **Slice cache** | LRU cache + neighbour prefetch for fast navigation |
 | **Guided tour** | Step-by-step overlay with spotlight prompts |
+| **Anisotropy aware** | Non-cubic voxels are scaled so anatomy keeps its proportions |
 
 ---
 
-## Quick start
+## Install
 
 ```bash
 git clone https://github.com/BasselShaheen06/MLenz.git
 cd MLenz
 python -m venv venv
-venv\Scripts\activate    # Windows
-source venv/bin/activate # macOS / Linux
+
+venv\Scripts\activate      # Windows
+source venv/bin/activate   # macOS / Linux
+
 pip install -r requirements.txt
 python main.py
 ```
 
-→ **[Full documentation](https://basselshaheen06.github.io/MLenz)**
+Or install it as a package and launch it from anywhere:
+
+```bash
+pip install .
+mlenz
+```
+
+Python 3.10 or newer. VTK needs a GPU with OpenGL 3.2+ for the 3D panel.
+
+---
+
+## Documentation
+
+- **Guides and the science behind the viewer** — published on the
+  [portfolio site](https://basselshaheen06.github.io).
+  <!-- TODO: replace with the MLenz page URL once the portfolio is live -->
+- **API reference** — [`docs/api/loader.md`](docs/api/loader.md) and
+  [`docs/api/renderer.md`](docs/api/renderer.md) stay in this repository,
+  next to the code they describe.
+
+The `docs/` folder is plain Markdown and is the single source of truth for both.
+See [`docs/README.md`](docs/README.md) for how the pages are published.
 
 ---
 
@@ -113,17 +117,45 @@ python main.py
 
 ```
 mlenz/
+├── app.py             # entry point — QApplication, theme, main window
 ├── core/
-│   ├── loader.py      # NIfTI + DICOM loading, VolumeData dataclass — no UI
+│   ├── loader.py      # NIfTI + DICOM loading, VolumeData — no UI
+│   ├── geometry.py    # aspect-ratio maths for anisotropic voxels
 │   └── renderer.py    # VTK pipeline, transfer function presets — no UI
 └── ui/
     ├── viewport.py    # SliceViewport — pyqtgraph canvas, crosshairs, annotation
     ├── controls.py    # TopBar (global actions)
     ├── main_window.py # Wiring, crosshair sync, cine timers, background load
-    └── theme.py       # Dark / light palettes, ThemeManager
+    ├── theme.py       # Dark / light palettes, ThemeManager
+    └── tour.py        # Guided-tour overlay
 ```
 
-`core/` modules have no UI dependencies — they work in scripts and notebooks.
+`core/` has no UI dependencies — it works in scripts and notebooks:
+
+```python
+from mlenz.core.loader import load_nifti
+
+volume = load_nifti("sub-0003_T1w.nii.gz")
+print(volume.data.shape)        # (Z, Y, X)
+print(volume.spacing_zyx)       # millimetres per voxel, same axis order
+print(volume.physical_extent)   # volume size in millimetres
+```
+
+---
+
+## Limitations
+
+Written down rather than hidden, because they decide what the tool is for today:
+
+- **Single-file DICOM only.** No folder/series import and no multi-frame DICOM.
+- **Through-plane spacing is assumed.** For a single DICOM file, `SliceThickness`
+  is ignored and z-spacing is taken as 1 mm.
+- **Window/level works on normalized intensities.** Hounsfield-unit conversion
+  and clinical presets (Brain, Bone, Lung) are in progress.
+- **Read-only.** No DICOM export, anonymisation, segmentation or registration yet.
+- **NIfTI and DICOM only.** No NRRD or DICOMDIR.
+- **Interactive testing is on Windows.** CI runs the test suite and a headless
+  import smoke test on Linux.
 
 ---
 
@@ -131,9 +163,12 @@ mlenz/
 
 ```bash
 pip install -r requirements-dev.txt
-ruff check .
 pytest
+ruff check .
 ```
+
+Tests cover the loaders, metadata preservation and the aspect-ratio geometry;
+the GUI is verified with a headless `QT_QPA_PLATFORM=offscreen` smoke test in CI.
 
 ---
 
