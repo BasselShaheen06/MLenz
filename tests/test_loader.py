@@ -154,6 +154,42 @@ def test_load_single_dicom_preserves_in_plane_spacing(tmp_path):
     assert volume.spacing[1] == pytest.approx(0.5)
 
 
+def test_dicom_tags_survive_reorientation(tmp_path):
+    """The orientation filter drops metadata, so the full tag map must be read first."""
+    volume = load_single_dicom(_write_dicom(tmp_path, np.zeros((8, 10)), modality="CT"))
+
+    assert volume.meta["0008|0060"] == "CT"
+    assert volume.meta["0028|0010"] == "8"   # Rows
+    assert volume.meta["0028|0011"] == "10"  # Columns
+
+
+def test_nifti_meta_is_a_dict_and_has_no_dicom_modality(tmp_path):
+    volume = load_nifti(_write_nifti(tmp_path, np.zeros((3, 3, 3))))
+
+    assert isinstance(volume.meta, dict)
+    assert volume.modality is None
+
+
+def test_spacing_zyx_matches_data_axis_order(tmp_path):
+    """data is (Z, Y, X) while spacing is (sx, sy, sz) — the helper bridges them."""
+    volume = load_nifti(
+        _write_nifti(tmp_path, np.zeros((4, 5, 6)), spacing=(2.0, 3.0, 4.0))
+    )
+
+    assert volume.data.shape == (6, 5, 4)
+    assert volume.spacing == pytest.approx((2.0, 3.0, 4.0))
+    assert volume.spacing_zyx == pytest.approx((4.0, 3.0, 2.0))
+
+
+def test_physical_extent_uses_matching_axis_order(tmp_path):
+    volume = load_nifti(
+        _write_nifti(tmp_path, np.zeros((4, 5, 6)), spacing=(2.0, 3.0, 4.0))
+    )
+
+    # (Z, Y, X) extents: 6 * 4 mm, 5 * 3 mm, 4 * 2 mm
+    assert volume.physical_extent == pytest.approx((24.0, 15.0, 8.0))
+
+
 def test_load_single_dicom_missing_file_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         load_single_dicom(tmp_path / "missing.dcm")

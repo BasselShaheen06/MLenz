@@ -14,7 +14,7 @@ Coordinate convention:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -23,7 +23,17 @@ import SimpleITK as sitk
 
 @dataclass(frozen=True)
 class VolumeData:
-    """Normalized volume data with physical spacing metadata."""
+    """A loaded volume plus the physical facts needed to interpret it.
+
+    Two axis orders meet in this object, so both are stated explicitly:
+
+    * ``data`` follows numpy convention and is ``(Z, Y, X)``.
+    * ``spacing`` follows the image header and is ``(sx, sy, sz)`` — the
+      physical size in millimetres of one voxel along X, Y and Z.
+
+    Use :attr:`spacing_zyx` whenever multiplying against ``data.shape``;
+    doing it by hand is how organ volumes end up silently wrong.
+    """
 
     data: np.ndarray
     spacing: tuple[float, float, float]  # (sx, sy, sz)
@@ -31,6 +41,18 @@ class VolumeData:
     raw_max: float
     modality: str | None = None
     orientation: str | None = None
+    meta: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def spacing_zyx(self) -> tuple[float, float, float]:
+        """Voxel spacing in the same axis order as ``data``: ``(sz, sy, sx)``."""
+        sx, sy, sz = self.spacing
+        return sz, sy, sx
+
+    @property
+    def physical_extent(self) -> tuple[float, float, float]:
+        """Volume size in millimetres as ``(extent_z, extent_y, extent_x)``."""
+        return tuple(dim * step for dim, step in zip(self.data.shape, self.spacing_zyx))
 
 
 # ---------------------------------------------------------------------------
@@ -59,7 +81,7 @@ def load_nifti(path: str | Path) -> VolumeData:
         image = sitk.ReadImage(str(path))
         # Capture DICOM metadata first: DICOMOrientImageFilter drops every
         # metadata key, so reading tags after reorientation returns nothing.
-        modality = _get_modality(image)
+        meta = _get_meta(image)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)      # already (Z, Y, X)
     except Exception as exc:
@@ -72,7 +94,8 @@ def load_nifti(path: str | Path) -> VolumeData:
         spacing,
         lo,
         hi,
-        modality=modality,
+        modality=meta.get("0008|0060"),
+        meta=meta,
         orientation=orientation,
     )
 
@@ -109,7 +132,7 @@ def load_dicom_series(directory: str | Path) -> VolumeData:
 
     try:
         image = reader.Execute()
-        modality = _get_modality(image)
+        meta = _get_meta(image)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)
     except Exception as exc:
@@ -124,7 +147,8 @@ def load_dicom_series(directory: str | Path) -> VolumeData:
         spacing,
         lo,
         hi,
-        modality=modality,
+        modality=meta.get("0008|0060"),
+        meta=meta,
         orientation=orientation,
     )
 
@@ -148,7 +172,7 @@ def load_single_dicom(path: str | Path) -> VolumeData:
 
     try:
         image = sitk.ReadImage(str(path))
-        modality = _get_modality(image)
+        meta = _get_meta(image)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)
     except Exception as exc:
@@ -166,7 +190,8 @@ def load_single_dicom(path: str | Path) -> VolumeData:
         spacing,
         lo,
         hi,
-        modality=modality,
+        modality=meta.get("0008|0060"),
+        meta=meta,
         orientation=orientation,
     )
 
@@ -197,7 +222,7 @@ def guess_loader(path: str | Path) -> VolumeData:
     # Fall back to SimpleITK and let it decide
     try:
         image = sitk.ReadImage(str(path))
-        modality = _get_modality(image)
+        meta = _get_meta(image)
         image, orientation = _orient_image(image)
         norm, lo, hi = _normalise(sitk.GetArrayFromImage(image))
         spacing = _get_spacing(image)
@@ -206,7 +231,8 @@ def guess_loader(path: str | Path) -> VolumeData:
             spacing,
             lo,
             hi,
-            modality=modality,
+            modality=meta.get("0008|0060"),
+        meta=meta,
             orientation=orientation,
         )
     except Exception as exc:
@@ -237,13 +263,16 @@ def _get_spacing(image: sitk.Image) -> tuple[float, float, float]:
     return float(sx), float(sy), float(sz)
 
 
-def _get_modality(image: sitk.Image) -> str | None:
+def _get_meta(image: sitk.Image) -> dict[str, str]:
+    """Return every metadata key on the image, as a plain dict.
+
+    Must be called *before* reorientation: ``DICOMOrientImageFilter`` drops
+    all metadata, so tags read afterwards come back empty.
+    """
     try:
-        if image.HasMetaDataKey("0008|0060"):
-            return image.GetMetaData("0008|0060")
+        return {key: image.GetMetaData(key) for key in image.GetMetaDataKeys()}
     except Exception:
-        return None
-    return None
+        return {}
 
 
 def _orient_image(image: sitk.Image, desired: str = "LPS") -> tuple[sitk.Image, str]:
