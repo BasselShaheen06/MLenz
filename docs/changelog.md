@@ -1,5 +1,34 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- **Installed console script was broken** — the `mlenz` entry point pointed at
+  the root-level `main.py`, which is not part of the wheel, so `pip install .`
+  and then `mlenz` crashed. The launcher now lives in `mlenz/app.py`; `main.py`
+  remains as a thin backward-compatible shim and `python -m mlenz` also works.
+- **DICOM modality was always lost** — `DICOMOrientImageFilter` drops every
+  metadata key, so tags were read after reorientation and came back empty.
+  Metadata is now read before orienting. This also unblocks CT Hounsfield-unit
+  scaling, which needs `RescaleSlope`/`RescaleIntercept` from the same headers.
+- **Anisotropic voxels crashed the viewer** — the aspect-ratio correction called
+  `ImageItem.scale(sx, sy)`, which pyqtgraph 0.14 no longer accepts, and the
+  ratio was inverted. Replaced with an explicit `QTransform` and moved the math
+  into `core/geometry.py`, which is unit-tested. Square-pixel volumes were
+  unaffected, so the bug stayed hidden on isotropic demo data.
+
+### Added
+
+- `tests/test_loader.py` — 15 tests over the public loaders, using synthetic
+  NIfTI and DICOM files (no patient data).
+- `tests/test_geometry.py` — aspect-ratio tests.
+- `mlenz/core/geometry.py` — pure, Qt-free geometry helpers.
+- Explicit `__init__.py` files so `mlenz`, `mlenz.core` and `mlenz.ui` are
+  regular packages rather than implicit namespace packages.
+- CI now runs on `main` (it was watching `master`, so it never ran), installs
+  the package, and verifies the console-script entry point.
+
 ## [1.0.0] — 2026
 
 ### Complete rewrite — modular architecture

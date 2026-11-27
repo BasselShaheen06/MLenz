@@ -57,6 +57,9 @@ def load_nifti(path: str | Path) -> VolumeData:
 
     try:
         image = sitk.ReadImage(str(path))
+        # Capture DICOM metadata first: DICOMOrientImageFilter drops every
+        # metadata key, so reading tags after reorientation returns nothing.
+        modality = _get_modality(image)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)      # already (Z, Y, X)
     except Exception as exc:
@@ -69,7 +72,7 @@ def load_nifti(path: str | Path) -> VolumeData:
         spacing,
         lo,
         hi,
-        modality=_get_modality(image),
+        modality=modality,
         orientation=orientation,
     )
 
@@ -106,6 +109,7 @@ def load_dicom_series(directory: str | Path) -> VolumeData:
 
     try:
         image = reader.Execute()
+        modality = _get_modality(image)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)
     except Exception as exc:
@@ -120,7 +124,7 @@ def load_dicom_series(directory: str | Path) -> VolumeData:
         spacing,
         lo,
         hi,
-        modality=_get_modality(image),
+        modality=modality,
         orientation=orientation,
     )
 
@@ -144,6 +148,7 @@ def load_single_dicom(path: str | Path) -> VolumeData:
 
     try:
         image = sitk.ReadImage(str(path))
+        modality = _get_modality(image)
         image, orientation = _orient_image(image)
         array = sitk.GetArrayFromImage(image)
     except Exception as exc:
@@ -161,7 +166,7 @@ def load_single_dicom(path: str | Path) -> VolumeData:
         spacing,
         lo,
         hi,
-        modality=_get_modality(image),
+        modality=modality,
         orientation=orientation,
     )
 
@@ -192,6 +197,7 @@ def guess_loader(path: str | Path) -> VolumeData:
     # Fall back to SimpleITK and let it decide
     try:
         image = sitk.ReadImage(str(path))
+        modality = _get_modality(image)
         image, orientation = _orient_image(image)
         norm, lo, hi = _normalise(sitk.GetArrayFromImage(image))
         spacing = _get_spacing(image)
@@ -200,7 +206,7 @@ def guess_loader(path: str | Path) -> VolumeData:
             spacing,
             lo,
             hi,
-            modality=_get_modality(image),
+            modality=modality,
             orientation=orientation,
         )
     except Exception as exc:

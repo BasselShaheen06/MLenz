@@ -19,6 +19,9 @@
 - [x] Background loading with `QThread`
 - [x] LRU slice cache (36 slots) + neighbor prefetch
 - [x] Physical voxel spacing applied to aspect ratio
+- [x] Anisotropic-spacing aspect correction fixed (was inverted and crashed on pyqtgraph 0.14)
+- [x] Installable package — `pip install .` provides the `mlenz` command and `python -m mlenz`
+- [x] Test suite (loader + geometry) running in CI on `main`
 - [x] Dark / light mode with system preference detection
 
 ## Planned — short term

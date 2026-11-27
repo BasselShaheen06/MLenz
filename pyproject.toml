@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "mlenz"
@@ -19,8 +19,14 @@ dependencies = [
     "nibabel>=5.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
 [project.scripts]
-mlenz = "main:main"
+mlenz = "mlenz.app:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

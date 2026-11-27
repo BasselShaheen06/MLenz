@@ -1,17 +1,9 @@
-"""MLenz entry point."""
-import sys
+"""Backward-compatible launcher: ``python main.py``.
 
-from PyQt5.QtWidgets import QApplication
+Prefer ``python -m mlenz`` or the installed ``mlenz`` command.
+"""
 
-from mlenz.ui.main_window import MainWindow
-
-def main():
-    app = QApplication(sys.argv)
-    app.setApplicationName("MLenz")
-    app.setOrganizationName("MLenz")
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+from mlenz.app import main
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
