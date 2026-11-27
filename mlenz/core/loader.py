@@ -42,6 +42,7 @@ class VolumeData:
     modality: str | None = None
     orientation: str | None = None
     meta: dict[str, str] = field(default_factory=dict)
+    rescale_applied: bool = False
 
     @property
     def spacing_zyx(self) -> tuple[float, float, float]:
@@ -96,6 +97,7 @@ def load_nifti(path: str | Path) -> VolumeData:
         hi,
         modality=meta.get("0008|0060"),
         meta=meta,
+        rescale_applied=_has_rescale(meta),
         orientation=orientation,
     )
 
@@ -149,6 +151,7 @@ def load_dicom_series(directory: str | Path) -> VolumeData:
         hi,
         modality=meta.get("0008|0060"),
         meta=meta,
+        rescale_applied=_has_rescale(meta),
         orientation=orientation,
     )
 
@@ -192,6 +195,7 @@ def load_single_dicom(path: str | Path) -> VolumeData:
         hi,
         modality=meta.get("0008|0060"),
         meta=meta,
+        rescale_applied=_has_rescale(meta),
         orientation=orientation,
     )
 
@@ -233,6 +237,7 @@ def guess_loader(path: str | Path) -> VolumeData:
             hi,
             modality=meta.get("0008|0060"),
         meta=meta,
+        rescale_applied=_has_rescale(meta),
             orientation=orientation,
         )
     except Exception as exc:
@@ -273,6 +278,16 @@ def _get_meta(image: sitk.Image) -> dict[str, str]:
         return {key: image.GetMetaData(key) for key in image.GetMetaDataKeys()}
     except Exception:
         return {}
+
+
+def _has_rescale(meta: dict[str, str]) -> bool:
+    """True when the DICOM headers carry rescale tags.
+
+    SimpleITK applies ``RescaleSlope``/``RescaleIntercept`` while reading, so
+    when these tags are present the voxel values are already in modality units
+    (Hounsfield units for CT). Applying them a second time would be wrong.
+    """
+    return "0028|1053" in meta or "0028|1052" in meta
 
 
 def _orient_image(image: sitk.Image, desired: str = "LPS") -> tuple[sitk.Image, str]:
