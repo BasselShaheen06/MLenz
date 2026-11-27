@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from PyQt5.QtCore import Qt, QRect, QRectF, QPoint
-from PyQt5.QtGui import QColor, QPainter, QPainterPath, QFont
+from PyQt5.QtCore import QPoint, QRect, QRectF, Qt
+from PyQt5.QtGui import QColor, QPainter, QPainterPath
 from PyQt5.QtWidgets import (
     QFrame,
+    QHBoxLayout,
     QLabel,
     QPushButton,
-    QHBoxLayout,
     QVBoxLayout,
     QWidget,
 )

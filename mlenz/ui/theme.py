@@ -9,9 +9,9 @@ this is clinical convention, not a style choice.
 """
 
 from __future__ import annotations
+
 from PyQt5.QtCore import QSettings
 from PyQt5.QtGui import QPalette
-
 
 DARK: dict[str, str] = {
     "bg":          "#0A1515",

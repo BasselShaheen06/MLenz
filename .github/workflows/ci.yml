@@ -3,7 +3,7 @@ name: ci
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -23,9 +23,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+          pip install --no-deps -e .
+
+      - name: Qt runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgl1 libegl1 libxkbcommon0
 
       - name: Lint
         run: ruff check .
 
       - name: Tests
         run: pytest
+
+      - name: Console script is wired
+        run: |
+          python -c "import importlib.metadata as md; eps=[e for e in md.entry_points(group='console_scripts') if e.name=='mlenz']; assert eps, 'mlenz console script missing'; assert eps[0].value=='mlenz.app:main', eps[0].value; print('entry point:', eps[0].value)"
+
+      - name: Import smoke test
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python -c "from mlenz.app import main; from mlenz.ui.main_window import MainWindow; print('imports ok')"

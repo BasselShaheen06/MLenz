@@ -18,8 +18,7 @@ from collections import OrderedDict
 from pathlib import Path
 
 import numpy as np
-
-from PyQt5.QtCore import Qt, QObject, QThread, QTimer, pyqtSignal
+from PyQt5.QtCore import QObject, Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (
     QApplication,
@@ -42,9 +41,9 @@ except ImportError:
 from mlenz.core.loader import VolumeData, guess_loader, load_single_dicom
 from mlenz.core.renderer import VolumeRenderer
 from mlenz.ui.controls import TopBar
-from mlenz.ui.viewport import SliceViewport
 from mlenz.ui.theme import ThemeManager
 from mlenz.ui.tour import TourOverlay, TourStep
+from mlenz.ui.viewport import SliceViewport
 
 _theme = ThemeManager()
 

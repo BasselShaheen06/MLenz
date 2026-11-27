@@ -19,7 +19,6 @@ import numpy as np
 import vtk
 from vtkmodules.util import numpy_support
 
-
 # ---------------------------------------------------------------------------
 # Transfer function presets
 # ---------------------------------------------------------------------------
