@@ -50,12 +50,24 @@ Standard CT presets (Hounsfield Units):
 | Tissue | L | W |
 |---|---|---|
 | Brain soft tissue | 40 | 80 |
-| Subdural haematoma | 75 | 215 |
 | Bone | 400 | 1800 |
 | Lung | −600 | 1500 |
+| Soft tissue | 40 | 400 |
+| Angio | 300 | 600 |
 
-MLenz normalises all intensities to [0, 1] on load. L and W are
-expressed as fractions. The default (L=0.5, W=1.0) shows the full range.
+MLenz normalises all intensities to [0, 1] on load, so the sliders work in
+fractions: the default (L=0.5, W=1.0) shows the full range.
+
+For CT, the presets are stored in Hounsfield units and converted to that scale
+before they reach the sliders:
+
+$$\text{stored} = \text{normalised}\cdot(\text{raw}_{max}-\text{raw}_{min}) + \text{raw}_{min}$$
+$$\text{HU} = \text{stored}\cdot\text{RescaleSlope} + \text{RescaleIntercept}$$
+
+The rescale tags come from the file header rather than a table of scanner
+models. SimpleITK applies them while reading, so MLenz records that in
+`VolumeData.rescale_applied` and does not apply them a second time — doing so
+would shift every voxel by the intercept.
 
 ---
 

@@ -62,6 +62,7 @@ instead of in a separate window.
 | **Crosshairs** | Draggable `InfiniteLine` — drag any line to update all planes |
 | **File formats** | NIfTI `.nii`/`.nii.gz` · single DICOM `.dcm` |
 | **Per-viewport controls** | ▶ Play/Pause · colormap · W slider · L slider — embedded in each plane |
+| **CT window presets** | Brain · Bone · Lung · Soft tissue · Angio — in Hounsfield units |
 | **Global cine** | ▶ All / ⏸ All — play every plane together |
 | **Annotation mode** | Freehand drawing, clear, export as PNG |
 | **3D rendering** | VTK GPU ray-cast embedded as 4th viewport |
@@ -150,8 +151,9 @@ Written down rather than hidden, because they decide what the tool is for today:
 - **Single-file DICOM only.** No folder/series import and no multi-frame DICOM.
 - **Through-plane spacing is assumed.** For a single DICOM file, `SliceThickness`
   is ignored and z-spacing is taken as 1 mm.
-- **Window/level works on normalized intensities.** Hounsfield-unit conversion
-  and clinical presets (Brain, Bone, Lung) are in progress.
+- **Window/level works on normalized intensities.** CT volumes can be read in
+  Hounsfield units and windowed with clinical presets, but the sliders still
+  operate on the normalised scale, so the readout is not in HU yet.
 - **Read-only.** No DICOM export, anonymisation, segmentation or registration yet.
 - **NIfTI and DICOM only.** No NRRD or DICOMDIR.
 - **Interactive testing is on Windows.** CI runs the test suite and a headless

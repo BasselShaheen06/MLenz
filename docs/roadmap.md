@@ -27,10 +27,10 @@
 - [x] Runtime dependencies match the imports (`pyqtgraph` was undeclared)
 - [x] Dark / light mode with system preference detection
 - [x] Documentation published from the portfolio site, source kept in `docs/`
+- [x] Hounsfield-unit conversion for CT, with Brain · Bone · Lung · Soft-tissue · Angio presets
 
 ## Planned — short term
 
-- [ ] Hounsfield-unit conversion for CT, with Brain · Bone · Lung · Soft-tissue presets
 - [ ] Pixel value readout on hover
 - [ ] Keyboard shortcuts (L=load, R=reset, P=play, 1/2/3=focus plane)
 - [ ] DICOM metadata panel (acquisition parameters, anonymised)

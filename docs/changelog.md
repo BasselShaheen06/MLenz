@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Hounsfield-unit conversion for CT** — `mlenz/core/windowing.py` recovers the
+  stored values from the normalised array and converts them to HU using the
+  rescale tags preserved in `VolumeData.meta`. Ships with the clinical presets
+  Brain (L40/W80), Bone (L400/W1800), Lung (L−600/W1500), Soft tissue (L40/W400)
+  and Angio (L300/W600).
+- **Preset selector in every viewport** — visible only for CT volumes, and it
+  returns to the placeholder as soon as a slider is moved by hand, so the label
+  never describes a window the view is not using.
+- `VolumeData.rescale_applied` — SimpleITK applies `RescaleSlope`/
+  `RescaleIntercept` while reading a DICOM, so the loader records that and
+  `to_hounsfield()` leaves the values alone. Applying the tags a second time
+  would shift every voxel by the intercept. A real-DICOM round-trip test pins
+  the behaviour.
+- `tests/test_windowing.py` — 20 tests, including the end-to-end
+  DICOM → loader → HU path.
+
+### Fixed
+
 Nothing yet.
 
 ## [1.1.0] — 2026-11-27
