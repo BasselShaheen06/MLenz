@@ -5,7 +5,7 @@
 **Multi-planar reconstruction viewer for MRI and CT**
 
 [![Portfolio](https://img.shields.io/badge/docs-portfolio-teal)](https://basselshaheen06.github.io)
-[![CI](https://github.com/BasselShaheen06/MLenz/actions/workflows/ci.yml/badge.svg)](https://github.com/BasselShaheen06/MLenz/actions/workflows/ci.yml)
+[![CI](https://github.com/BasselShaheen06/MLenz/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/BasselShaheen06/MLenz/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-teal)](https://www.python.org)
 
