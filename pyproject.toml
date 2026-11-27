@@ -11,18 +11,19 @@ license = { text = "MIT" }
 authors = [{ name = "Bassel Shaheen", email = "bassel.abdelmonem06@eng-st.cu.edu.eg" }]
 dependencies = [
     "PyQt5>=5.15",
+    "pyqtgraph>=0.13",
     "matplotlib>=3.7",
     "SimpleITK>=2.3",
     "numpy>=1.24",
     "vtk>=9.2",
-    "pydicom>=2.4",
-    "nibabel>=5.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",
+    "nibabel>=5.0",
+    "pydicom>=2.4",
 ]
 
 [project.scripts]
